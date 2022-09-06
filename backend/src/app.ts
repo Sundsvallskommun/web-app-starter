@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import fs from 'fs';
+import { existsSync, mkdirSync } from 'fs';
 import { defaultMetadataStorage } from 'class-transformer/cjs/storage';
 import { validationMetadatasToSchemas } from 'class-validator-jsonschema';
 import compression from 'compression';
@@ -44,6 +44,7 @@ import { PrismaClient } from '@prisma/client';
 import { Profile } from './interfaces/profile.interface';
 import ApiService from '@/services/api.service';
 import { HttpException } from './exceptions/HttpException';
+import { join } from 'path';
 
 const SessionStoreCreate = SESSION_MEMORY ? createMemoryStore(session) : createFileStore(session);
 const sessionTTL = 4 * 24 * 60 * 60;
@@ -138,6 +139,9 @@ class App {
     this.env = NODE_ENV || 'development';
     this.port = PORT || 3000;
     this.swaggerEnabled = SWAGGER_ENABLED || false;
+
+
+    this.initializeDataFolders();
 
     this.initializeMiddlewares();
     this.initializeRoutes(Controllers);
@@ -286,6 +290,21 @@ class App {
 
   private initializeErrorHandling() {
     this.app.use(errorMiddleware);
+  }
+
+  private initializeDataFolders() {
+    const databaseDir: string = join(__dirname, "../data/database");
+    if (!existsSync(databaseDir)) {
+      mkdirSync(databaseDir, {recursive: true});
+    }
+    const logsDir: string = join(__dirname, "../data/logs");
+    if (!existsSync(logsDir)) {
+      mkdirSync(logsDir, {recursive: true});
+    }
+    const sessionsDir: string = join(__dirname, "../data/sessions");
+    if (!existsSync(sessionsDir)) {
+      mkdirSync(sessionsDir, {recursive: true});
+    }
   }
 }
 
