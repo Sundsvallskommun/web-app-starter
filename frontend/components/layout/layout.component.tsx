@@ -14,7 +14,7 @@ export default function Layout({ title, children }) {
         <>
             <Head>
                 <title>{title}</title>
-                <meta name="description" content="Mina Sidor Företag" />
+                <meta name="description" content="Web app starter" />
             </Head>
 
             <NextLink href="#content" passHref>
