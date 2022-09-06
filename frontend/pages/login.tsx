@@ -27,7 +27,7 @@ export default function Start() {
 
     return (
         <>
-            <EmptyLayout title="Webb app starter - Logga In">
+            <EmptyLayout title="Web app starter - Logga In">
                 <main>
                     <div className="flex items-center justify-center min-h-screen">
                         <div className="max-w-5xl w-full flex flex-col bg-white p-20 shadow-lg text-left">
