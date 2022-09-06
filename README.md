@@ -17,10 +17,12 @@ Dessa APIer används i projektet, applikationsanvändaren i WSO2 måste prenumer
 
 ### Steg för steg
 
-1. Klona ner repot.
+1. Klona ner repot till en mapp "<web-app-projektnamn>" och skapa nytt git repo
 
 ```
 npx tiged --mode=git git@github.com:Sundsvallskommun/web-app-starter.git <web-app-projektnamn>
+cd <web-app-projektnamn>
+git init
 ```
 
 2. Installera dependencies för både `backend` och `frontend`
