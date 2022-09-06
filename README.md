@@ -20,7 +20,7 @@ Dessa APIer används i projektet, applikationsanvändaren i WSO2 måste prenumer
 1. Klona ner repot.
 
 ```
-git clone git@github.com:Sundsvallskommun/web-app-starter.git
+npx tiged --mode=git git@github.com:Sundsvallskommun/web-app-starter.git <web-app-projektnamn>
 ```
 
 2. Installera dependencies för både `backend` och `frontend`
