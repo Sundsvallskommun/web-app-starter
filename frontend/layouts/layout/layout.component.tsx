@@ -3,7 +3,7 @@ import { Link, CookieConsent, Header, Footer, UserMenu } from '@sk-web-gui/react
 import NextLink from 'next/link';
 import { useRef } from 'react';
 import SK_logo from '../../public/svg/SK_logo.svg';
-import Image from 'next/future/image';
+import Image from 'next/image';
 
 export default function Layout({ title, children }) {
   const initialFocus = useRef(null);
@@ -19,17 +19,20 @@ export default function Layout({ title, children }) {
         <meta name="description" content="Web app starter" />
       </Head>
 
-      <NextLink href="#content" passHref>
+      <NextLink legacyBehavior={true} href="#content" passHref>
         <a
-          onClick={() => setInitialFocus()}
           accessKey="s"
+          onClick={() => setInitialFocus()}
           className="sr-only focus:not-sr-only bg-primary-light border-2 border-black p-4 text-black inline-block focus:absolute focus:top-0 focus:left-0 focus:right-0 focus:m-auto focus:w-80 text-center"
         >
           Hoppa till innehåll
         </a>
       </NextLink>
 
-      <Header title={`Web app starter`} LogoLinkWrapperComponent={<NextLink href={'/'} passHref />} />
+      <Header
+        title={`Web app starter`}
+        LogoLinkWrapperComponent={<NextLink legacyBehavior={true} href={'/'} passHref />}
+      />
 
       {children}
 
@@ -40,7 +43,7 @@ export default function Layout({ title, children }) {
             Vi använder kakor, cookies, för att ge dig en förbättrad upplevelse, sammanställa statistik och för att viss
             nödvändig funktionalitet ska fungera på webbplatsen.{' '}
             <NextLink href="/kakor" passHref>
-              <Link>Läs mer om hur vi använder kakor</Link>
+              <Link as="span">Läs mer om hur vi använder kakor</Link>
             </NextLink>
           </p>
         }

@@ -1,11 +1,7 @@
 {
   "compilerOptions": {
     "target": "es5",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": false,
@@ -21,22 +17,16 @@
     "baseUrl": ".",
     "paths": {
       "@components/*": ["components/*"],
+      "@layouts/*": ["layouts/*"],
       "@interfaces/*": ["interfaces/*"],
       "@utils/*": ["utils/*"],
       "@pages/*": ["pages/*"],
       "@public/*": ["public/*"],
       "@services/*": ["services/*"],
       "@contexts/*": ["contexts/*"],
-      "@jestRoot/*": [".jest/*"],
-    },
+      "@jestRoot/*": [".jest/*"]
+    }
   },
-  "include": [
-    "next-env.d.ts",
-    "node_modules/dayjs/plugin/utc.d.ts",
-    "**/*.ts",
-    "**/*.tsx"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["next-env.d.ts", "node_modules/dayjs/plugin/utc.d.ts", "**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules"]
 }

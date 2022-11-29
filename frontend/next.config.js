@@ -8,5 +8,8 @@ module.exports = withBundleAnalyzer({
     locales: ['sv'],
     defaultLocale: 'sv',
   },
-  experimental: { images: { allowFutureImage: true } },
+  images: {
+    domains: [process.env.DOMAIN_NAME],
+    formats: ['image/avif', 'image/webp'],
+  },
 });
