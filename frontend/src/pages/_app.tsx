@@ -1,7 +1,7 @@
 import type { AppProps /*, AppContext */ } from 'next/app';
 import { defaultTheme, GuiProvider, extendTheme } from '@sk-web-gui/react';
 import { useMemo, useState } from 'react';
-import '../../tailwind.scss';
+import '@styles/tailwind.scss';
 import { AppWrapper } from '../contexts/app.context';
 import dayjs from 'dayjs';
 import 'dayjs/locale/sv';

@@ -1,0 +1,10 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+@import '../../public/fonts/fonts.css';
+
+@import './base.scss';
+@import './layouts/sidebar-layout.scss';
+@import './layouts/default-layout.scss';
+@import './components.scss';
