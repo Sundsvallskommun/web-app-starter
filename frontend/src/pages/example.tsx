@@ -1,6 +1,6 @@
 import { default as Link } from 'next/link';
-import Layout from '@layouts/layout/layout.component';
-import { useAppContext } from '@contexts/app.context';
+import Layout from 'src/layouts/layout/layout.component';
+import { useAppContext } from 'src/contexts/app.context';
 import { useEffect } from 'react';
 import Router from 'next/router';
 import { getMe } from '@services/user-service';

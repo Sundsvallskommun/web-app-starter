@@ -1,4 +1,4 @@
-import { User } from '@interfaces/user';
+import { User } from 'src/interfaces/user';
 import { ApiResponse, apiService } from './api-service';
 
 export const emptyUser: User = {
@@ -15,9 +15,7 @@ const handleSetUserResponse: (res: ApiResponse<User>) => User = (res) => ({
 });
 
 export const getMe: () => Promise<User> = () => {
-  return apiService
-    .get<ApiResponse<User>>('me')
-    .then((res) => handleSetUserResponse(res.data))
+  return apiService.get<ApiResponse<User>>('me').then((res) => handleSetUserResponse(res.data));
 };
 
 export const saveUserSettings: (settings: any) => Promise<boolean> = (settings) => {

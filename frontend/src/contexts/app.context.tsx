@@ -1,4 +1,4 @@
-import { User } from '@interfaces/user';
+import { User } from 'src/interfaces/user';
 import { createContext, useContext, useState } from 'react';
 import { emptyUser } from '@services/user-service';
 

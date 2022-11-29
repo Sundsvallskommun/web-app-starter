@@ -2,7 +2,7 @@ import Head from 'next/head';
 import { Link, CookieConsent, Header, Footer, UserMenu } from '@sk-web-gui/react';
 import NextLink from 'next/link';
 import { useRef } from 'react';
-import SK_logo from '../../public/svg/SK_logo.svg';
+import SK_logo from '@public/svg/SK_logo.svg';
 import Image from 'next/image';
 
 export default function Layout({ title, children }) {
