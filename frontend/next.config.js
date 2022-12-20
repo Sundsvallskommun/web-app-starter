@@ -12,4 +12,8 @@ module.exports = withBundleAnalyzer({
     domains: [process.env.DOMAIN_NAME],
     formats: ['image/avif', 'image/webp'],
   },
+  basePath: process.env.BASE_PATH,
+  sassOptions: {
+    prependData: `$basePath: '${process.env.BASE_PATH}';`,
+  },
 });
