@@ -4,7 +4,7 @@ module.exports = {
     './src/pages/**/*.{js,ts,jsx,tsx}',
     './src/components/**/*.{js,ts,jsx,tsx}',
     './src/layouts/**/*.{js,ts,jsx,tsx}',
-    './node_modules/@sk-web-gui/**/*.{js,ts,jsx,tsx}',
+    './node_modules/@sk-web-gui/*/dist/**/*.js',
   ],
   darkMode: 'class', // or 'media' or 'class'
   theme: {
