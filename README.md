@@ -4,9 +4,9 @@
 
 Dessa APIer används i projektet, applikationsanvändaren i WSO2 måste prenumerera på dessa.
 
-| API | Version |
-| --- | ------: |
-| N/A |     0.0 |
+| API             | Version |
+| --------------- | ------: |
+| SimulatorServer |     2.0 |
 
 ## Utveckling
 
