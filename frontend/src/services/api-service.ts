@@ -11,10 +11,11 @@ export interface ApiResponse<T> {
   message: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let isChangingRoute = false;
 let isRedirectingToLogin = false;
 
-Router.events.on('routeChangeStart', (route) => {
+Router.events.on('routeChangeStart', () => {
   isChangingRoute = true;
 });
 
@@ -27,7 +28,6 @@ Router.events.on('routeChangeComplete', (route) => {
 });
 
 export const handleError = (error) => {
-  // FIXME: we should have a logged in guard?
   if (error.response.status === 401 && Router.pathname !== '/login' && !isRedirectingToLogin) {
     isRedirectingToLogin = true;
     Router.push('/login');
@@ -43,21 +43,26 @@ const defaultOptions = {
   withCredentials: true,
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const get = <T>(url: string, options?: { [key: string]: any }) =>
   axios.get<T>(apiURL(url), { ...defaultOptions, ...options }).catch(handleError);
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const post = <T>(url: string, data: any, options?: { [key: string]: any }) => {
   return axios.post<T>(apiURL(url), data, { ...defaultOptions, ...options }).catch(handleError);
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const remove = <T>(url: string, options?: { [key: string]: any }) => {
   return axios.delete<T>(apiURL(url), { ...defaultOptions, ...options }).catch(handleError);
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const patch = <T>(url: string, data: any, options?: { [key: string]: any }) => {
   return axios.patch<T>(apiURL(url), data, { ...defaultOptions, ...options }).catch(handleError);
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const put = <T>(url: string, data: any, options?: { [key: string]: any }) => {
   return axios.put<T>(apiURL(url), data, { ...defaultOptions, ...options }).catch(handleError);
 };

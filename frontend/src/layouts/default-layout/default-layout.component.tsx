@@ -17,7 +17,7 @@ export default function DefaultLayout({ title, children }) {
     <div className="DefaultLayout full-page-layout">
       <Head>
         <title>{title}</title>
-        <meta name="description" content="Masterdata" />
+        <meta name="description" content="Web app starter" />
       </Head>
 
       <NextLink legacyBehavior={true} href="#content" passHref>
@@ -26,7 +26,10 @@ export default function DefaultLayout({ title, children }) {
         </a>
       </NextLink>
 
-      <Header title={`Masterdata`} LogoLinkWrapperComponent={<NextLink legacyBehavior={true} href={'/'} passHref />} />
+      <Header
+        title={`Web app starter`}
+        LogoLinkWrapperComponent={<NextLink legacyBehavior={true} href={'/'} passHref />}
+      />
 
       <div className="main-container flex-grow">
         <div className="container">

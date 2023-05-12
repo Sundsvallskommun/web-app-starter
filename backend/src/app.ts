@@ -140,7 +140,6 @@ class App {
     this.port = PORT || 3000;
     this.swaggerEnabled = SWAGGER_ENABLED || false;
 
-
     this.initializeDataFolders();
 
     this.initializeMiddlewares();
@@ -270,7 +269,7 @@ class App {
     const storage = getMetadataArgsStorage();
     const spec = routingControllersToSpec(storage, routingControllersOptions, {
       components: {
-        schemas,
+        schemas: schemas as { [schema: string]: unknown },
         securitySchemes: {
           basicAuth: {
             scheme: 'basic',
@@ -279,7 +278,7 @@ class App {
         },
       },
       info: {
-        description: 'Mina Sidor För Företag',
+        description: 'Web App Starter',
         title: 'API',
         version: '1.0.0',
       },
@@ -293,17 +292,17 @@ class App {
   }
 
   private initializeDataFolders() {
-    const databaseDir: string = join(__dirname, "../data/database");
+    const databaseDir: string = join(__dirname, '../data/database');
     if (!existsSync(databaseDir)) {
-      mkdirSync(databaseDir, {recursive: true});
+      mkdirSync(databaseDir, { recursive: true });
     }
-    const logsDir: string = join(__dirname, "../data/logs");
+    const logsDir: string = join(__dirname, '../data/logs');
     if (!existsSync(logsDir)) {
-      mkdirSync(logsDir, {recursive: true});
+      mkdirSync(logsDir, { recursive: true });
     }
-    const sessionsDir: string = join(__dirname, "../data/sessions");
+    const sessionsDir: string = join(__dirname, '../data/sessions');
     if (!existsSync(sessionsDir)) {
-      mkdirSync(sessionsDir, {recursive: true});
+      mkdirSync(sessionsDir, { recursive: true });
     }
   }
 }

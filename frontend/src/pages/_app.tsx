@@ -7,6 +7,7 @@ import dayjs from 'dayjs';
 import 'dayjs/locale/sv';
 import utc from 'dayjs/plugin/utc';
 import updateLocale from 'dayjs/plugin/updateLocale';
+import LoginGuard from '@components/login-guard/login-guard';
 
 dayjs.extend(utc);
 dayjs.locale('sv');
@@ -44,7 +45,9 @@ function MyApp({ Component, pageProps }: AppProps) {
   return (
     <GuiProvider theme={theme} colorScheme={colorScheme}>
       <AppWrapper>
-        <Component {...pageProps} />
+        <LoginGuard>
+          <Component {...pageProps} />
+        </LoginGuard>
       </AppWrapper>
     </GuiProvider>
   );
