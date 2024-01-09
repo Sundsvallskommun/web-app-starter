@@ -11,6 +11,9 @@ export default function Start() {
   const isLoggedOut = params.get('loggedout') === '';
   const failMessage = params.get('failMessage');
 
+  // Turn on/off automatic login
+  const autoLogin = true;
+
   const initalFocus = useRef(null);
   const setInitalFocus = () => {
     setTimeout(() => {
@@ -28,7 +31,8 @@ export default function Start() {
     setInitalFocus();
     if (isLoggedOut) {
       window.history.replaceState(null, '', '/login');
-    } else if (!failMessage && router.isReady) {
+    } else if (!failMessage && router.isReady && autoLogin) {
+      // autologin
       onLogin();
     } else if (failMessage === 'SAML_MISSING_GROUP') {
       setErrorMessage('Användaren saknar rätt grupper');
@@ -40,7 +44,7 @@ export default function Start() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router, isLoggedOut, failMessage]);
 
-  if (!failMessage && !isLoggedOut) {
+  if (!failMessage && !isLoggedOut && autoLogin) {
     return <LoaderFullScreen />;
   }
 
@@ -48,13 +52,13 @@ export default function Start() {
     <EmptyLayout title={`${process.env.NEXT_PUBLIC_APP_NAME} - Logga In`}>
       <main>
         <div className="flex items-center justify-center min-h-screen">
-          <div className="max-w-5xl w-full flex flex-col bg-white p-20 shadow-lg text-left">
+          <div className="max-w-5xl w-full flex flex-col text-light-primary bg-inverted-background-content p-20 shadow-lg text-left">
             <div className="mb-14">
               <h1 className="mb-10 text-xl">{process.env.NEXT_PUBLIC_APP_NAME}</h1>
               <p className="my-0">Beskrivning av appen</p>
             </div>
 
-            <Button onClick={() => onLogin()} ref={initalFocus} data-cy="loginButton">
+            <Button inverted onClick={() => onLogin()} ref={initalFocus} data-cy="loginButton">
               Logga in
             </Button>
 
