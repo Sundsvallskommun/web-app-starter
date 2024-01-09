@@ -56,3 +56,13 @@ export const formatOrgNr = (orgNr: string, format: OrgNumberFormat = OrgNumberFo
   }
   return format === OrgNumberFormat.DASH ? orgNumber.substring(0, 6) + '-' + orgNumber.substring(6, 10) : orgNumber;
 };
+
+export const isValidUrl = (string: string) => {
+  let url;
+  try {
+    url = new URL(string);
+  } catch (_) {
+    return false;
+  }
+  return url.protocol === 'http:' || url.protocol === 'https:';
+};

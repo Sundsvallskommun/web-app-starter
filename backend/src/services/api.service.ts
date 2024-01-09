@@ -1,6 +1,6 @@
 import { HttpException } from '@/exceptions/HttpException';
 import { apiURL } from '@/utils/util';
-import axios, { AxiosError, AxiosRequestConfig, AxiosRequestHeaders } from 'axios';
+import axios, { AxiosError, AxiosRequestConfig } from 'axios';
 import ApiTokenService from './api-token.service';
 
 class ApiResponse<T> {

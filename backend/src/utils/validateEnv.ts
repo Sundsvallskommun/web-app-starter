@@ -1,4 +1,4 @@
-import { cleanEnv, port, str, url,  } from 'envalid';
+import { cleanEnv, port, str, url } from 'envalid';
 
 // NOTE: Make sure we got these in ENV
 const validateEnv = () => {
@@ -14,6 +14,7 @@ const validateEnv = () => {
     SAML_LOGOUT_CALLBACK_URL: url(),
     SAML_SUCCESS_REDIRECT: url(),
     SAML_FAILURE_REDIRECT: url(),
+    SAML_FAILURE_REDIRECT_MESSAGE: url(),
     SAML_ENTRY_SSO: url(),
     SAML_ISSUER: str(),
     SAML_IDP_PUBLIC_CERT: str(),

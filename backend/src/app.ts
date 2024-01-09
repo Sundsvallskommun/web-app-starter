@@ -18,40 +18,45 @@ import { useExpressServer, getMetadataArgsStorage } from 'routing-controllers';
 import { routingControllersToSpec } from 'routing-controllers-openapi';
 import swaggerUi from 'swagger-ui-express';
 import {
-  NODE_ENV,
-  PORT,
-  SWAGGER_ENABLED,
-  LOG_FORMAT,
-  ORIGIN,
+  APP_NAME,
+  BASE_URL_PREFIX,
   CREDENTIALS,
-  SECRET_KEY,
+  LOG_FORMAT,
+  NODE_ENV,
+  ORIGIN,
+  PORT,
   SAML_CALLBACK_URL,
-  SAML_LOGOUT_CALLBACK_URL,
-  SAML_SUCCESS_REDIRECT,
-  SAML_FAILURE_REDIRECT,
-  SAML_LOGOUT_REDIRECT,
   SAML_ENTRY_SSO,
-  SAML_ISSUER,
+  SAML_FAILURE_REDIRECT,
+  SAML_FAILURE_REDIRECT_MESSAGE,
   SAML_IDP_PUBLIC_CERT,
+  SAML_ISSUER,
+  SAML_LOGOUT_CALLBACK_URL,
+  SAML_LOGOUT_REDIRECT,
   SAML_PRIVATE_KEY,
   SAML_PUBLIC_KEY,
-  BASE_URL_PREFIX,
+  SAML_SUCCESS_BASE,
+  SAML_SUCCESS_REDIRECT,
+  SECRET_KEY,
   SESSION_MEMORY,
+  SWAGGER_ENABLED,
 } from '@config';
 import errorMiddleware from '@middlewares/error.middleware';
 import { logger, stream } from '@utils/logger';
-import { PrismaClient } from '@prisma/client';
 import { Profile } from './interfaces/profile.interface';
 import ApiService from '@/services/api.service';
 import { HttpException } from './exceptions/HttpException';
 import { join } from 'path';
+import { isValidUrl } from './utils/util';
+import { additionalConverters } from './utils/custom-validation-classes';
+import { User } from './interfaces/users.interface';
 
 const SessionStoreCreate = SESSION_MEMORY ? createMemoryStore(session) : createFileStore(session);
 const sessionTTL = 4 * 24 * 60 * 60;
 // NOTE: memory uses ms while file uses seconds
 const sessionStore = new SessionStoreCreate(SESSION_MEMORY ? { checkPeriod: sessionTTL * 1000 } : { sessionTTL, path: './data/sessions' });
 
-const prisma = new PrismaClient();
+// const prisma = new PrismaClient();
 const apiService = new ApiService();
 
 passport.serializeUser(function (user, done) {
@@ -64,23 +69,16 @@ passport.deserializeUser(function (user, done) {
 const samlStrategy = new Strategy(
   {
     disableRequestedAuthnContext: true,
-    //attributeConsumingServiceIndex: '2',
-    //xmlSignatureTransforms: ['test'],
-    //authnContext: ['urn:oasis:names:tc:SAML:2.0:ac:classes:unspecified'],
     identifierFormat: 'urn:oasis:names:tc:SAML:2.0:nameid-format:transient',
     callbackUrl: SAML_CALLBACK_URL,
     entryPoint: SAML_ENTRY_SSO,
-    //decryptionPvk: SAML_PRIVATE_KEY,
+    // decryptionPvk: SAML_PRIVATE_KEY,
     privateKey: SAML_PRIVATE_KEY,
     // Identity Provider's public key
     cert: SAML_IDP_PUBLIC_CERT,
     issuer: SAML_ISSUER,
     wantAssertionsSigned: false,
-    // signatureAlgorithm: 'sha256',
-    // digestAlgorithm: 'sha256',
-    // maxAssertionAgeMs: 2592000000,
-    // authnRequestBinding: 'HTTP-POST',
-    //logoutUrl: 'http://194.71.24.30/sso',
+    acceptedClockSkewMs: 1000,
     logoutCallbackUrl: SAML_LOGOUT_CALLBACK_URL,
   },
   async function (profile: Profile, done: VerifiedCallback) {
@@ -90,7 +88,7 @@ const samlStrategy = new Strategy(
         message: 'Missing SAML profile',
       });
     }
-    const { givenName, surname, citizenIdentifier } = profile;
+    const { givenName, surname, citizenIdentifier, username } = profile;
 
     if (!givenName || !surname || !citizenIdentifier) {
       return done({
@@ -111,8 +109,10 @@ const samlStrategy = new Strategy(
         });
       }
 
-      const findUser = {
+      const findUser: User = {
+        id: personId,
         guid: personId,
+        username: username,
         name: `${givenName} ${surname}`,
         givenName: givenName,
         surname: surname,
@@ -121,7 +121,7 @@ const samlStrategy = new Strategy(
       done(null, findUser);
     } catch (err) {
       if (err instanceof HttpException && err?.status === 404) {
-        // TODO: Handle missing person form Citizen?
+        // Handle missing person form Citizen
       }
       done(err);
     }
@@ -190,6 +190,8 @@ class App {
       (req, res, next) => {
         if (req.session.returnTo) {
           req.query.RelayState = req.session.returnTo;
+        } else if (req.query.path) {
+          req.query.RelayState = req.query.path;
         }
         next();
       },
@@ -233,11 +235,26 @@ class App {
       `${BASE_URL_PREFIX}/saml/login/callback`,
       bodyParser.urlencoded({ extended: false }),
       (req, res, next) => {
+        let successRedirect, failRedirect;
+        if (isValidUrl(req.body.RelayState)) {
+          successRedirect = req.body.RelayState;
+        } else {
+          successRedirect = `${SAML_SUCCESS_BASE}${req.body.RelayState}`;
+        }
+
+        if (req.session.messages?.length > 0) {
+          failRedirect = SAML_FAILURE_REDIRECT_MESSAGE + `?failMessage=${req.session.messages[0]}`;
+        } else {
+          failRedirect = SAML_FAILURE_REDIRECT_MESSAGE;
+        }
+
         passport.authenticate('saml', {
-          failureRedirect: SAML_FAILURE_REDIRECT,
+          successReturnToOrRedirect: req.body.RelayState ? successRedirect : SAML_SUCCESS_REDIRECT,
+          failureRedirect: failRedirect,
+          failureMessage: true,
         })(req, res, next);
       },
-      (req, res, next) => {
+      (req, res) => {
         res.redirect(SAML_SUCCESS_REDIRECT);
       },
     );
@@ -260,9 +277,11 @@ class App {
     const schemas = validationMetadatasToSchemas({
       classTransformerMetadataStorage: defaultMetadataStorage,
       refPointerPrefix: '#/components/schemas/',
+      additionalConverters: additionalConverters,
     });
 
     const routingControllersOptions = {
+      routePrefix: `${BASE_URL_PREFIX}`,
       controllers: controllers,
     };
 
@@ -278,12 +297,13 @@ class App {
         },
       },
       info: {
-        description: 'Web App Starter',
-        title: 'API',
+        title: `${APP_NAME} Proxy API`,
+        description: '',
         version: '1.0.0',
       },
     });
 
+    this.app.use(`${BASE_URL_PREFIX}/swagger.json`, (req, res) => res.json(spec));
     this.app.use(`${BASE_URL_PREFIX}/api-docs`, swaggerUi.serve, swaggerUi.setup(spec));
   }
 
