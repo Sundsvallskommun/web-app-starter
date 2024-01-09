@@ -1,17 +1,17 @@
 import DefaultLayout from '@layouts/default-layout/default-layout.component';
+import Main from '@layouts/main/main.component';
 import { useUserStore } from '@services/user-service/user-service';
-import ContentCard from '@components/content-card/content-card';
 import { Link } from '@sk-web-gui/react';
 import NextLink from 'next/link';
 import { shallow } from 'zustand/shallow';
 
 export const Exempelsida: React.FC = () => {
   const user = useUserStore((s) => s.user, shallow);
-
+  console.log('user', user);
   return (
-    <DefaultLayout title={`Web app starter - Exempelsida`}>
-      <ContentCard>
-        <div className="text-lg text-content mb-11">
+    <DefaultLayout title={`${process.env.NEXT_PUBLIC_APP_NAME} - Exempelsida`}>
+      <Main>
+        <div className="text-content">
           <h1>Välkommen{user.name ? ` ${user.name}` : ''}!</h1>
           <p>
             Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa.
@@ -20,13 +20,15 @@ export const Exempelsida: React.FC = () => {
           </p>
           {user.name ? (
             <NextLink href={`${process.env.NEXT_PUBLIC_API_URL}/saml/logout`}>
-              <Link as="span">Logga ut</Link>
+              <Link as="span" variant="link">
+                Logga ut
+              </Link>
             </NextLink>
           ) : (
             ''
           )}
         </div>
-      </ContentCard>
+      </Main>
     </DefaultLayout>
   );
 };
