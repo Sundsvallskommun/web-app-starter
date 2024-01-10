@@ -19,7 +19,7 @@ export const Exempelsida: React.FC = () => {
             ultricies nec, pellentesque eu, pretium quis, sem.
           </p>
           {user.name ? (
-            <NextLink href={`${process.env.NEXT_PUBLIC_API_URL}/saml/logout`}>
+            <NextLink href={`/logout`}>
               <Link as="span" variant="link">
                 Logga ut
               </Link>

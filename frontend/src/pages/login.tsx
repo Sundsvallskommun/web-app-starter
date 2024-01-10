@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { Button, FormErrorMessage } from '@sk-web-gui/react';
 import EmptyLayout from '@layouts/empty-layout/empty-layout.component';
 import LoaderFullScreen from '@components/loader/loader-fullscreen';
+import { appURL } from '@utils/app-url';
 
 export default function Start() {
   const router = useRouter();
@@ -24,7 +25,12 @@ export default function Start() {
   const onLogin = () => {
     // NOTE: send user to login with SSO
     const path = new URLSearchParams(window.location.search).get('path') || router.query.path || '';
-    router.push(`${process.env.NEXT_PUBLIC_API_URL}/saml/login?path=${path}`);
+    router.push({
+      pathname: `${process.env.NEXT_PUBLIC_API_URL}/saml/login`,
+      query: {
+        successRedirect: `${appURL()}${path}`,
+      },
+    });
   };
 
   useEffect(() => {

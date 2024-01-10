@@ -28,15 +28,11 @@ import {
   SAML_CALLBACK_URL,
   SAML_ENTRY_SSO,
   SAML_FAILURE_REDIRECT,
-  SAML_FAILURE_REDIRECT_MESSAGE,
   SAML_IDP_PUBLIC_CERT,
   SAML_ISSUER,
   SAML_LOGOUT_CALLBACK_URL,
-  SAML_LOGOUT_REDIRECT,
   SAML_PRIVATE_KEY,
   SAML_PUBLIC_KEY,
-  SAML_SUCCESS_BASE,
-  SAML_SUCCESS_REDIRECT,
   SECRET_KEY,
   SESSION_MEMORY,
   SWAGGER_ENABLED,
@@ -199,8 +195,8 @@ class App {
       (req, res, next) => {
         if (req.session.returnTo) {
           req.query.RelayState = req.session.returnTo;
-        } else if (req.query.path) {
-          req.query.RelayState = req.query.path;
+        } else if (req.query.successRedirect) {
+          req.query.RelayState = req.query.successRedirect;
         }
         next();
       },
@@ -217,56 +213,71 @@ class App {
       res.status(200).send(metadata);
     });
 
-    this.app.get(`${BASE_URL_PREFIX}/saml/logout`, bodyParser.urlencoded({ extended: false }), (req, res, next) => {
-      samlStrategy.logout(req as any, () => {
-        req.logout(err => {
-          if (err) {
-            return next(err);
-          }
-          // FIXME: should we redirect here or should client do it?
-          res.redirect(SAML_LOGOUT_REDIRECT);
+    this.app.get(
+      `${BASE_URL_PREFIX}/saml/logout`,
+      (req, res, next) => {
+        if (req.session.returnTo) {
+          req.query.RelayState = req.session.returnTo;
+        } else if (req.query.successRedirect) {
+          req.query.RelayState = req.query.successRedirect;
+        }
+        next();
+      },
+      (req, res, next) => {
+        const successRedirect = req.query.successRedirect;
+        samlStrategy.logout(req as any, () => {
+          req.logout(err => {
+            if (err) {
+              return next(err);
+            }
+            res.redirect(successRedirect as string);
+          });
         });
-      });
-    });
+      },
+    );
 
     this.app.get(`${BASE_URL_PREFIX}/saml/logout/callback`, bodyParser.urlencoded({ extended: false }), (req, res, next) => {
-      // FIXME: is this enough or do we need to do something more?
       req.logout(err => {
         if (err) {
           return next(err);
         }
-        // FIXME: should we redirect here or should client do it?
-        res.redirect(SAML_LOGOUT_REDIRECT);
-      });
-    });
 
-    this.app.post(
-      `${BASE_URL_PREFIX}/saml/login/callback`,
-      bodyParser.urlencoded({ extended: false }),
-      (req, res, next) => {
-        let successRedirect, failRedirect;
+        let successRedirect, failureRedirect;
         if (isValidUrl(req.body.RelayState)) {
           successRedirect = req.body.RelayState;
-        } else {
-          successRedirect = `${SAML_SUCCESS_BASE}${req.body.RelayState}`;
         }
 
         if (req.session.messages?.length > 0) {
-          failRedirect = SAML_FAILURE_REDIRECT_MESSAGE + `?failMessage=${req.session.messages[0]}`;
+          failureRedirect = successRedirect + `?failMessage=${req.session.messages[0]}`;
         } else {
-          failRedirect = SAML_FAILURE_REDIRECT_MESSAGE;
+          failureRedirect = successRedirect + `?failMessage='SAML_UNKNOWN_ERROR'`;
         }
+        if (failureRedirect) {
+          res.redirect(failureRedirect);
+        } else {
+          res.redirect(successRedirect);
+        }
+      });
+    });
 
-        passport.authenticate('saml', {
-          successReturnToOrRedirect: req.body.RelayState ? successRedirect : SAML_SUCCESS_REDIRECT,
-          failureRedirect: failRedirect,
-          failureMessage: true,
-        })(req, res, next);
-      },
-      (req, res) => {
-        res.redirect(SAML_SUCCESS_REDIRECT);
-      },
-    );
+    this.app.post(`${BASE_URL_PREFIX}/saml/login/callback`, bodyParser.urlencoded({ extended: false }), (req, res, next) => {
+      let successRedirect, failureRedirect;
+      if (isValidUrl(req.body.RelayState)) {
+        successRedirect = req.body.RelayState;
+      }
+
+      if (req.session.messages?.length > 0) {
+        failureRedirect = successRedirect + `?failMessage=${req.session.messages[0]}`;
+      } else {
+        failureRedirect = successRedirect + `?failMessage='SAML_UNKNOWN_ERROR'`;
+      }
+
+      passport.authenticate('saml', {
+        successReturnToOrRedirect: successRedirect,
+        failureRedirect: failureRedirect,
+        failureMessage: true,
+      })(req, res, next);
+    });
   }
 
   private initializeRoutes(controllers: Function[]) {
