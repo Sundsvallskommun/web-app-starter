@@ -1,10 +1,9 @@
 export type User = {
-  id: number;
+  personId: string;
   username: string;
   name: string;
   givenName: string;
   surname: string;
-  guid: string;
 };
 
 export type ClientUser = {

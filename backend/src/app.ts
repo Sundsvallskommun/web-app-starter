@@ -97,6 +97,16 @@ const samlStrategy = new Strategy(
       });
     }
 
+    //   const groupList: ADRole[] =
+    //   groups !== undefined
+    //     ? (groups
+    //         .split(',')
+    //         .map(x => x.toLowerCase())
+    //         .filter(x => x.includes('sg_appl_app_')) as ADRole[])
+    //     : [];
+
+    // const appGroups: ADRole[] = groupList.length > 0 ? groupList : groupList.concat('sg_appl_app_read');
+
     try {
       const personNumber = profile.citizenIdentifier;
       const citizenResult = await apiService.get<any>({ url: `citizen/1.0/person/${personNumber}/guid` });
@@ -110,8 +120,7 @@ const samlStrategy = new Strategy(
       }
 
       const findUser: User = {
-        id: personId,
-        guid: personId,
+        personId: personId,
         username: username,
         name: `${givenName} ${surname}`,
         givenName: givenName,
