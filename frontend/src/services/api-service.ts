@@ -2,35 +2,23 @@ import axios from 'axios';
 import Router from 'next/router';
 import { apiURL } from '@utils/api-url';
 
-export interface Data {
-  error?: string;
-}
-
 export interface ApiResponse<T> {
   data: T;
   message: string;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-let isChangingRoute = false;
-let isRedirectingToLogin = false;
-
-Router.events.on('routeChangeStart', () => {
-  isChangingRoute = true;
-});
-
-Router.events.on('routeChangeComplete', (route) => {
-  isRedirectingToLogin = false;
-  isChangingRoute = false;
-  if (route === '/login') {
-    isRedirectingToLogin = false;
-  }
-});
-
 export const handleError = (error) => {
-  if (error.response.status === 401 && Router.pathname !== '/login' && !isRedirectingToLogin) {
-    isRedirectingToLogin = true;
-    Router.push('/login');
+  if (error?.response?.status === 401 && !Router.pathname.includes('login')) {
+    Router.push(
+      {
+        pathname: `/login?path=${window.location.pathname}`,
+        query: {
+          path: window.location.pathname,
+          failMessage: error,
+        },
+      },
+      `/login?path=${window.location.pathname}`
+    );
   }
 
   throw error;

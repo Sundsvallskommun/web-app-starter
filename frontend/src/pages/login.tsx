@@ -23,8 +23,8 @@ export default function Start() {
 
   const onLogin = () => {
     // NOTE: send user to login with SSO
-    const path = new URLSearchParams(window.location.search).get('path') || router.query.path;
-    router.push(`${process.env.NEXT_PUBLIC_API_URL}/saml/login?path=${path || ''}`);
+    const path = new URLSearchParams(window.location.search).get('path') || router.query.path || '';
+    router.push(`${process.env.NEXT_PUBLIC_API_URL}/saml/login?path=${path}`);
   };
 
   useEffect(() => {
