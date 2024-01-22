@@ -8,6 +8,8 @@ import { appURL } from '@utils/app-url';
 export default function Start() {
   const router = useRouter();
   const [errorMessage, setErrorMessage] = useState('');
+  const [mounted, setMounted] = useState(false);
+
   const params = new URLSearchParams(window.location.search);
   const isLoggedOut = params.get('loggedout') === '';
   const failMessage = params.get('failMessage');
@@ -35,22 +37,33 @@ export default function Start() {
 
   useEffect(() => {
     setInitalFocus();
+    if (!router.isReady) return;
+    setTimeout(() => setMounted(true), 500); // to not flash the login-screen on autologin
     if (isLoggedOut) {
-      window.history.replaceState(null, '', '/login');
-    } else if (!failMessage && router.isReady && autoLogin) {
-      // autologin
-      onLogin();
-    } else if (failMessage === 'SAML_MISSING_GROUP') {
-      setErrorMessage('Användaren saknar rätt grupper');
-    } else if (failMessage === 'SAML_MISSING_ATTRIBUTES') {
-      setErrorMessage('Användaren saknar rätt attribut');
-    } else if (failMessage === 'MISSING_PERMISSIONS') {
-      setErrorMessage('Användaren saknar rättigheter');
+      router.push(
+        {
+          pathname: '/login',
+        },
+        '/login',
+        { shallow: true }
+      );
+    } else {
+      if (!failMessage && autoLogin) {
+        // autologin
+        onLogin();
+      } else if (failMessage === 'SAML_MISSING_GROUP') {
+        setErrorMessage('Användaren saknar rätt grupper');
+      } else if (failMessage === 'SAML_MISSING_ATTRIBUTES') {
+        setErrorMessage('Användaren saknar rätt attribut');
+      } else if (failMessage === 'MISSING_PERMISSIONS') {
+        setErrorMessage('Användaren saknar rättigheter');
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [router, isLoggedOut, failMessage]);
+  }, [router.isReady]);
 
-  if (!failMessage && !isLoggedOut && autoLogin) {
+  if (!mounted && !failMessage) {
+    // to not flash the login-screen on autologin
     return <LoaderFullScreen />;
   }
 
