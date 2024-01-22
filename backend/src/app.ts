@@ -40,7 +40,6 @@ import {
 import errorMiddleware from '@middlewares/error.middleware';
 import { logger, stream } from '@utils/logger';
 import { Profile } from './interfaces/profile.interface';
-import ApiService from '@/services/api.service';
 import { HttpException } from './exceptions/HttpException';
 import { join } from 'path';
 import { isValidUrl } from './utils/util';
@@ -53,7 +52,7 @@ const sessionTTL = 4 * 24 * 60 * 60;
 const sessionStore = new SessionStoreCreate(SESSION_MEMORY ? { checkPeriod: sessionTTL * 1000 } : { sessionTTL, path: './data/sessions' });
 
 // const prisma = new PrismaClient();
-const apiService = new ApiService();
+// const apiService = new ApiService();
 
 passport.serializeUser(function (user, done) {
   done(null, user);
@@ -104,19 +103,19 @@ const samlStrategy = new Strategy(
     // const appGroups: ADRole[] = groupList.length > 0 ? groupList : groupList.concat('sg_appl_app_read');
 
     try {
-      const personNumber = profile.citizenIdentifier;
-      const citizenResult = await apiService.get<any>({ url: `citizen/1.0/person/${personNumber}/guid` });
-      const { data: personId } = citizenResult;
+      // const personNumber = profile.citizenIdentifier;
+      // const citizenResult = await apiService.get<any>({ url: `citizen/2.0/${personNumber}/guid` });
+      // const { data: personId } = citizenResult;
 
-      if (!personId) {
-        return done({
-          name: 'SAML_CITIZEN_FAILED',
-          message: 'Failed to fetch user from Citizen API',
-        });
-      }
+      // if (!personId) {
+      //   return done({
+      //     name: 'SAML_CITIZEN_FAILED',
+      //     message: 'Failed to fetch user from Citizen API',
+      //   });
+      // }
 
       const findUser: User = {
-        personId: personId,
+        // personId: personId,
         username: username,
         name: `${givenName} ${surname}`,
         givenName: givenName,
