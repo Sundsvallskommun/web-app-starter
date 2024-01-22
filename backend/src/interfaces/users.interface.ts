@@ -1,7 +1,12 @@
-export interface User {
-  id: number;
+export type User = {
+  // personId: string;
+  username: string;
   name: string;
-  guid: string;
-  email: string;
-  password: string;
-}
+  givenName: string;
+  surname: string;
+};
+
+export type ClientUser = {
+  name: string;
+  username: string;
+};

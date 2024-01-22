@@ -21,9 +21,3 @@ body {
 .main-container {
   flex: 1 0 auto;
 }
-
-@layer components {
-  .custom-scroll {
-    @apply scrollbar scrollbar-h-5 scrollbar-thumb-gray-300 scrollbar-track-gray-100 scrollbar-thumb-rounded-full scrollbar-track-rounded-full;
-  }
-}
