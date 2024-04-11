@@ -3,34 +3,41 @@ import Main from '@layouts/main/main.component';
 import { useUserStore } from '@services/user-service/user-service';
 import { Link } from '@sk-web-gui/react';
 import NextLink from 'next/link';
+import { useTranslation } from 'next-i18next';
 import { shallow } from 'zustand/shallow';
+import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
+import { capitalize } from 'underscore.string';
 
 export const Exempelsida: React.FC = () => {
   const user = useUserStore((s) => s.user, shallow);
+  const { t } = useTranslation();
   console.log('user', user);
   return (
-    <DefaultLayout title={`${process.env.NEXT_PUBLIC_APP_NAME} - Exempelsida`}>
+    <DefaultLayout title={`${process.env.NEXT_PUBLIC_APP_NAME} - ${t('example:title')}`}>
       <Main>
         <div className="text-content">
-          <h1>Välkommen{user.name ? ` ${user.name}` : ''}!</h1>
-          <p>
-            Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa.
-            Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis,
-            ultricies nec, pellentesque eu, pretium quis, sem.
-          </p>
-          {user.name ? (
+          <h1>
+            {capitalize(`${t('common:welcome')}
+            ${user.name ? ` ${user.name}` : ''}!`)}
+          </h1>
+          <p>{t('example:description')}</p>
+          {user.name ?
             <NextLink href={`/logout`}>
               <Link as="span" variant="link">
-                Logga ut
+                {capitalize(t('common:logout'))}
               </Link>
             </NextLink>
-          ) : (
-            ''
-          )}
+          : ''}
         </div>
       </Main>
     </DefaultLayout>
   );
 };
+
+export const getServerSideProps = async ({ locale }) => ({
+  props: {
+    ...(await serverSideTranslations(locale, ['common', 'example', 'layout'])),
+  },
+});
 
 export default Exempelsida;

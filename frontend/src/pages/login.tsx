@@ -4,16 +4,18 @@ import { Button, FormErrorMessage } from '@sk-web-gui/react';
 import EmptyLayout from '@layouts/empty-layout/empty-layout.component';
 import LoaderFullScreen from '@components/loader/loader-fullscreen';
 import { appURL } from '@utils/app-url';
+import { useTranslation } from 'next-i18next';
+import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 
 export default function Start() {
   const router = useRouter();
   const [errorMessage, setErrorMessage] = useState('');
   const [mounted, setMounted] = useState(false);
+  const { t } = useTranslation();
 
   const params = new URLSearchParams(window.location.search);
   const isLoggedOut = params.get('loggedout') === '';
   const failMessage = params.get('failMessage');
-
   // Turn on/off automatic login
   const autoLogin = true;
 
@@ -51,12 +53,8 @@ export default function Start() {
       if (!failMessage && autoLogin) {
         // autologin
         onLogin();
-      } else if (failMessage === 'SAML_MISSING_GROUP') {
-        setErrorMessage('Användaren saknar rätt grupper');
-      } else if (failMessage === 'SAML_MISSING_ATTRIBUTES') {
-        setErrorMessage('Användaren saknar rätt attribut');
-      } else if (failMessage === 'MISSING_PERMISSIONS') {
-        setErrorMessage('Användaren saknar rättigheter');
+      } else if (failMessage) {
+        setErrorMessage(t(`login:errors.${failMessage}`));
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -74,11 +72,11 @@ export default function Start() {
           <div className="max-w-5xl w-full flex flex-col text-light-primary bg-inverted-background-content p-20 shadow-lg text-left">
             <div className="mb-14">
               <h1 className="mb-10 text-xl">{process.env.NEXT_PUBLIC_APP_NAME}</h1>
-              <p className="my-0">Beskrivning av appen</p>
+              <p className="my-0">{t('login:description')}</p>
             </div>
 
             <Button inverted onClick={() => onLogin()} ref={initalFocus} data-cy="loginButton">
-              Logga in
+              {t('common:login')}
             </Button>
 
             {errorMessage && <FormErrorMessage className="mt-lg">{errorMessage}</FormErrorMessage>}
@@ -88,3 +86,9 @@ export default function Start() {
     </EmptyLayout>
   );
 }
+
+export const getServerSideProps = async ({ locale }) => ({
+  props: {
+    ...(await serverSideTranslations(locale, ['common', 'login'])),
+  },
+});

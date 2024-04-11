@@ -2,6 +2,7 @@ import { CookieConsent, Footer, Header, Link } from '@sk-web-gui/react';
 import Head from 'next/head';
 import NextLink from 'next/link';
 import { useRouter } from 'next/router';
+import { useTranslation } from 'next-i18next';
 
 interface DefaultLayoutProps {
   children: React.ReactNode;
@@ -28,6 +29,8 @@ export default function DefaultLayout({
   const layoutTitle = `${process.env.NEXT_PUBLIC_APP_NAME}${headerSubtitle ? ` - ${headerSubtitle}` : ''}`;
   const fullTitle = postTitle ? `${layoutTitle} - ${postTitle}` : `${layoutTitle}`;
 
+  const { t } = useTranslation();
+
   const setFocusToMain = () => {
     const contentElement = document.getElementById('content');
     contentElement.focus();
@@ -46,7 +49,7 @@ export default function DefaultLayout({
 
       <NextLink href="#content" legacyBehavior passHref>
         <a onClick={setFocusToMain} accessKey="s" className="next-link-a" data-cy="systemMessage-a">
-          Hoppa till innehåll
+          {t('layout:header.goto_content')}
         </a>
       </NextLink>
 
@@ -70,35 +73,32 @@ export default function DefaultLayout({
       <Footer></Footer>
 
       <CookieConsent
-        title={`Kakor på ${process.env.NEXT_PUBLIC_APP_NAME}`}
+        title={t('layout:cookies.title', { app: process.env.NEXT_PUBLIC_APP_NAME })}
         body={
           <p>
-            Vi använder kakor, cookies, för att ge dig en förbättrad upplevelse, sammanställa statistik och för att viss
-            nödvändig funktionalitet ska fungera på webbplatsen.{' '}
+            {t('layout:cookies.description')}{' '}
             <NextLink href="/kakor" passHref legacyBehavior>
-              <Link>Läs mer om hur vi använder kakor</Link>
+              <Link>{t('layout:cookies.read_more')}</Link>
             </NextLink>
           </p>
         }
         cookies={[
           {
             optional: false,
-            displayName: 'Nödvändiga kakor',
-            description:
-              'Dessa kakor är nödvändiga för att webbplatsen ska fungera och kan inte stängas av i våra system.',
+            displayName: t('layout:cookies.necessary.displayName'),
+            description: t('layout:cookies.necessary.description'),
             cookieName: 'necessary',
           },
           {
             optional: true,
-            displayName: 'Funktionella kakor',
-            description: ' Dessa kakor ger förbättrade funktioner på webbplatsen.',
+            displayName: t('layout:cookies.func.displayName'),
+            description: t('layout:cookies.func.description'),
             cookieName: 'func',
           },
           {
             optional: true,
-            displayName: 'Kakor för statistik',
-            description:
-              'Dessa kakor tillåter oss att räkna besök och trafikkällor, så att vi kan mäta och förbättra prestanda på vår webbplats.',
+            displayName: t('layout:cookies.stats.displayName'),
+            description: t('layout:cookies.stats.description'),
             cookieName: 'stats',
           },
         ]}
