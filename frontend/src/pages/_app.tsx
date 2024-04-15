@@ -7,6 +7,8 @@ import updateLocale from 'dayjs/plugin/updateLocale';
 import utc from 'dayjs/plugin/utc';
 import type { AppProps /*, AppContext */ } from 'next/app';
 import { AppWrapper } from '../contexts/app.context';
+import { appWithTranslation } from 'next-i18next';
+import nextI18NextConfig from '../../next-i18next.config';
 
 dayjs.extend(utc);
 dayjs.locale('sv');
@@ -41,4 +43,4 @@ function MyApp({ Component, pageProps }: AppProps) {
   );
 }
 
-export default MyApp;
+export default appWithTranslation(MyApp, nextI18NextConfig);
