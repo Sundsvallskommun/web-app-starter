@@ -76,3 +76,38 @@ yarn prisma:migrate
 
    - För frontend, se till att backend är igång (`yarn dev`), i /frontend kör `yarn generate:contracts` för att synca backend med frontend
      -- Justera om så behövs utifrån de uppdaterade modellerna
+
+### Språkstöd
+
+För språkstöd används [next-i18next](https://github.com/i18next/next-i18next).
+
+Placera dina språkfiler i `frontend/public/locales/<locale>/<namespace>.json`.
+
+För att det ska fungera med **Next.js** och **SSR** måste du skicka med språkdatat till ServerSideProps.
+Det gör du genom att lägga till följande till dina page-komponenter (behövs ej i subkomponenter).
+
+```
+export const getServerSideProps = async ({ locale }) => ({
+  props: {
+    ...(await serverSideTranslations(locale, [<namespaces>])),
+  },
+});
+```
+
+För att lägga till ett ytterligare spåk, skapa en mapp med språkets namn, och lägg sedan till språket i `next-i18next.config.js`.
+
+**Exempel för tyska:**
+Skapa `frontend/public/locales/de/common.json`.
+Ändra next-i18next.config.js:
+
+```
+module.exports = {
+  i18n: {
+    defaultLocale: 'sv',
+    locales: ['sv', 'de'],
+  },
+ ...
+};
+```
+
+Som hjälp i VSCode rekommenderas [i18n Ally](https://marketplace.visualstudio.com/items?itemName=Lokalise.i18n-ally).
