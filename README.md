@@ -2,7 +2,7 @@
 
 ## APIer som används
 
-Dessa APIer används i projektet, applikationsanvändaren i WSO2 måste prenumerera på dessa.
+Dessa APIer används i projektet, applikationsanvändaren i WSO2 måste prenumerera på dessa. Systemet utgår ifrån /backend/api-config.ts där dessa står specificerade.
 
 | API             | Version |
 | --------------- | ------: |
@@ -12,7 +12,7 @@ Dessa APIer används i projektet, applikationsanvändaren i WSO2 måste prenumer
 
 ### Krav
 
-- Node >= 16 LTS
+- Node >= 20 LTS
 - Yarn
 
 ### Steg för steg
@@ -66,3 +66,13 @@ cd backend
 yarn prisma:generate
 yarn prisma:migrate
 ```
+
+6. Synca datamodeller för api:er
+
+   Se till att README och /backend/api-config.ts matchar och justera utefter de api:er som önskas användas.
+
+   - För backend, i /backend kör `yarn generate:contracts` för att få ned de senaste datamodellerna för samtliga api:er
+     -- Justera om så behövs utifrån de uppdaterade modellerna
+
+   - För frontend, se till att backend är igång (`yarn dev`), i /frontend kör `yarn generate:contracts` för att synca backend med frontend
+     -- Justera om så behövs utifrån de uppdaterade modellerna
