@@ -26,7 +26,8 @@
       "@pages/*": ["src/pages/*"],
       "@middlewares/*": ["src/utils/middlewares/*"],
       "@public/*": ["public/*"],
-      "@jestRoot/*": [".jest/*"]
+      "@jestRoot/*": [".jest/*"],
+      "@data-contracts/*": ["src/data-contracts/*"]
     }
   },
   "include": ["next-env.d.ts", "node_modules/dayjs/plugin/utc.d.ts", "**/*.ts", "**/*.tsx"],
