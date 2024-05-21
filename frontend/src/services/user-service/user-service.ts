@@ -1,10 +1,10 @@
-import { User } from '@interfaces/user';
 import { ApiResponse, apiService } from '../api-service';
 import { createWithEqualityFn } from 'zustand/traditional';
 import { devtools } from 'zustand/middleware';
 import { __DEV__ } from '@sk-web-gui/react';
 import { emptyUser } from './defaults';
-import { ServiceResponse } from '@interfaces/service';
+import { ServiceResponse } from '@interfaces/services';
+import { User } from '@data-contracts/backend/data-contracts';
 
 const handleSetUserResponse: (res: ApiResponse<User>) => User = (res) => ({
   name: res.data.name,
