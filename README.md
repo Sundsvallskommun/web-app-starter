@@ -69,7 +69,7 @@ yarn prisma:migrate
 
 6. Synca datamodeller för api:er
 
-   Se till att README och /backend/api-config.ts matchar och justera utefter de api:er som önskas användas.
+   Se till att README och /backend/src/config/api-config.ts matchar och justera utefter de api:er som önskas användas.
 
    - För backend, i /backend kör `yarn generate:contracts` för att få ned de senaste datamodellerna för samtliga api:er
      -- Justera om så behövs utifrån de uppdaterade modellerna
