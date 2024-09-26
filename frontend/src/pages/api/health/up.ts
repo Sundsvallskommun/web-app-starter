@@ -1,5 +1,6 @@
+import axios from 'axios';
+import https from 'https';
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { apiService } from '@services/api-service';
 
 const requireAuth = process.env.HEALTH_AUTH === 'true';
 const authUsername = process.env.HEALTH_USERNAME;
@@ -16,11 +17,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const health = await apiService.get('health/up').then((res) => res.data);
+    const agent = new https.Agent({
+      rejectUnauthorized: false,
+    });
+    const health = await axios
+      .get(`${process.env.NEXT_PUBLIC_API_URL}/health/up`, { httpsAgent: agent })
+      .then((res) => {
+        return res.data;
+      });
 
     res.status(200).send(health);
   } catch (error) {
     res.status(500).send({
+      error: error.toString(),
       status: 'ERROR!',
     });
   }
