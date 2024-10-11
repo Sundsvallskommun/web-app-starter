@@ -45,6 +45,9 @@ import { join } from 'path';
 import { isValidUrl } from './utils/util';
 import { additionalConverters } from './utils/custom-validation-classes';
 import { User } from './interfaces/users.interface';
+import cors from 'cors';
+
+const corsWhitelist = ORIGIN.split(',');
 
 const SessionStoreCreate = SESSION_MEMORY ? createMemoryStore(session) : createFileStore(session);
 const sessionTTL = 4 * 24 * 60 * 60;
@@ -188,6 +191,23 @@ class App {
     this.app.use(passport.initialize());
     this.app.use(passport.session());
     passport.use('saml', samlStrategy);
+
+    this.app.use(
+      cors({
+        credentials: CREDENTIALS,
+        origin: function (origin, callback) {
+          if (origin === undefined || corsWhitelist.indexOf(origin) !== -1 || corsWhitelist.indexOf('*') !== -1) {
+            callback(null, true);
+          } else {
+            if (NODE_ENV == 'development') {
+              callback(null, true);
+            } else {
+              callback(new Error('Not allowed by CORS'));
+            }
+          }
+        },
+      }),
+    );
 
     this.app.get(
       `${BASE_URL_PREFIX}/saml/login`,
