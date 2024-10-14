@@ -16,8 +16,6 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { capitalize } from 'underscore.string';
-import { yupResolver } from '@hookform/resolvers/yup';
-import * as yup from 'yup';
 
 export const EditAssistant: React.FC = () => {
   const { t } = useTranslation();
@@ -29,7 +27,6 @@ export const EditAssistant: React.FC = () => {
     router.push('/');
   }
 
-  const schema = yup.object({});
   const { create, update, getOne, defaultValues } = resources[resource];
   const { refresh } = useResource(resource);
 
