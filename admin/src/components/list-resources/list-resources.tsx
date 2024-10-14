@@ -29,7 +29,7 @@ export const ListResources: React.FC<ListResourcesProps> = ({ resource, headers:
       setHeaders({
         [resource]: [
           ...(defaultInformationFields || ['id']),
-          ...(Object.keys(data[0]) || []).filter((field) => typeof data[0][field] !== 'object'),
+          ...(data?.[0] ? Object.keys(data[0]).filter((field) => typeof data[0][field] !== 'object') : []),
         ],
       });
     }
@@ -40,7 +40,7 @@ export const ListResources: React.FC<ListResourcesProps> = ({ resource, headers:
       _headers ||
       storeHeaders?.reduce((headers, key) => {
         if (data) {
-          const type = typeof data[0][key];
+          const type = typeof data?.[0]?.[key];
           switch (type) {
             case 'string':
               return [
@@ -113,11 +113,13 @@ export const ListResources: React.FC<ListResourcesProps> = ({ resource, headers:
 
   return (
     <div>
-      <AutoTable
-        pageSize={15}
-        autodata={formattedData}
-        autoheaders={[...translatedHeaders, ...(update ? [editHeader] : [])]}
-      />
+      {formattedData.length > 0 ?
+        <AutoTable
+          pageSize={15}
+          autodata={formattedData}
+          autoheaders={[...translatedHeaders, ...(update ? [editHeader] : [])]}
+        />
+      : <h3>{capitalize(t('common:no_resources', { resources: t(`${resource}:name_zero`) }))}</h3>}
     </div>
   );
 };

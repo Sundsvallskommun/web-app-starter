@@ -13,6 +13,7 @@
   "list_all": "lista alla {{resource}}",
   "login": "logga in",
   "logout": "logga ut",
+  "no_resources": "inga {{resources}} hittades",
   "refresh": "ladda om",
   "remove": "ta bort",
   "remove_resource": "ta bort {{resource}}",

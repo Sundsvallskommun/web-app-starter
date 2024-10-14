@@ -39,6 +39,7 @@ export const EditResourceArray: React.FC<EditResourceArrayProps> = ({
     watch,
     setValue,
     setError,
+    clearErrors,
     formState: { errors },
   } = useFormContext<DataType>();
 
@@ -66,12 +67,12 @@ export const EditResourceArray: React.FC<EditResourceArrayProps> = ({
 
   useEffect(() => {
     if (fieldpathWithoutIndex(requiredFields).includes(i18nKey)) {
-      if (formdata.length < 1) {
+      if (Array.isArray(formdata) && formdata.length > 0) {
+        clearErrors(dataTypeKey as keyof DataType);
+      } else {
         setError(dataTypeKey as keyof DataType, {
           message: t('common:required', { resource: capitalize(t(`${resource}:properties.${i18nKey}.DEFAULT_many`)) }),
         });
-      } else {
-        setError(dataTypeKey as keyof DataType, null);
       }
     }
   }, [formdata]);
