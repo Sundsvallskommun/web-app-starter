@@ -7,6 +7,7 @@ import { appURL } from '@utils/app-url';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import { capitalize } from 'underscore.string';
+import { apiURL } from '@utils/api-url';
 
 export default function Start() {
   const router = useRouter();
@@ -28,16 +29,16 @@ export default function Start() {
   };
 
   const onLogin = () => {
-    // NOTE: send user to login with SSO
     const path = router.query.path || new URLSearchParams(window.location.search).get('path') || '';
 
-    router.push({
-      pathname: `${process.env.NEXT_PUBLIC_API_URL}/saml/login`,
-      query: {
-        successRedirect: `${appURL(path.toString())}`,
-        failRedirect: `${appURL('/login')}`,
-      },
+    const url = new URL(apiURL('/saml/login'));
+    const queries = new URLSearchParams({
+      successRedirect: `${appURL(path as string)}`,
+      failureRedirect: `${appURL()}/login`,
     });
+    url.search = queries.toString();
+    // NOTE: send user to login with SSO
+    window.location.href = url.toString();
   };
 
   useEffect(() => {
