@@ -35,6 +35,8 @@ cd backend
 yarn install
 ```
 
+Om du behöver ett administrationsgränssnitt, se [Dokumentation om Admin](./admin/README.md).
+
 3. Skapa .env-fil för `frontend`
 
 ```
@@ -82,6 +84,8 @@ yarn prisma:migrate
 För språkstöd används [next-i18next](https://github.com/i18next/next-i18next).
 
 Placera dina språkfiler i `frontend/public/locales/<locale>/<namespace>.json`.
+
+För ytterligare information om språkstöd i `admin` se [Dokumentation om Admin](./admin/README.md)
 
 För att det ska fungera med **Next.js** och **SSR** måste du skicka med språkdatat till ServerSideProps.
 Det gör du genom att lägga till följande till dina page-komponenter (behövs ej i subkomponenter).
