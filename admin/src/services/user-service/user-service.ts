@@ -4,17 +4,17 @@ import { devtools } from 'zustand/middleware';
 import { __DEV__ } from '@sk-web-gui/react';
 import { emptyUser } from './defaults';
 import { ServiceResponse } from '@interfaces/services';
-import { ClientUser } from '@data-contracts/backend/data-contracts';
+import { User } from '@data-contracts/backend/data-contracts';
 
-const handleSetUserResponse: (res: ApiResponse<ClientUser>) => ClientUser = (res) => ({
+const handleSetUserResponse: (res: ApiResponse<User>) => User = (res) => ({
   name: res.data.name,
   username: res.data.username,
   // permissions: res.data.permissions,
 });
 
-const getMe: () => Promise<ServiceResponse<ClientUser>> = () => {
+const getMe: () => Promise<ServiceResponse<User>> = () => {
   return apiService
-    .get<ApiResponse<ClientUser>>('me')
+    .get<ApiResponse<User>>('me')
     .then((res) => ({ data: handleSetUserResponse(res.data) }))
     .catch((e) => ({
       message: e.response?.data.message,
@@ -23,11 +23,11 @@ const getMe: () => Promise<ServiceResponse<ClientUser>> = () => {
 };
 
 interface State {
-  user: ClientUser;
+  user: User;
 }
 interface Actions {
-  setUser: (user: ClientUser) => void;
-  getMe: () => Promise<ServiceResponse<ClientUser>>;
+  setUser: (user: User) => void;
+  getMe: () => Promise<ServiceResponse<User>>;
   reset: () => void;
 }
 
