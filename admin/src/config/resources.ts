@@ -6,7 +6,9 @@ const apiService = new Api({ baseURL: process.env.NEXT_PUBLIC_API_URL, withCrede
 
 const users: Resource<User> = {
   name: 'users',
+  /** @ts-expect-error New endpoint must be created and handle the call */
   getOne: apiService.userControllerGetUser,
+  /** @ts-expect-error New endpoint must be created and handle the call */
   getMany: apiService.userControllerGetUsers,
   defaultValues: {
     name: '',
