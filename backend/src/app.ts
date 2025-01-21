@@ -1,22 +1,3 @@
-import 'reflect-metadata';
-import { existsSync, mkdirSync } from 'fs';
-import { defaultMetadataStorage } from 'class-transformer/cjs/storage';
-import { validationMetadatasToSchemas } from 'class-validator-jsonschema';
-import compression from 'compression';
-import cookieParser from 'cookie-parser';
-import session from 'express-session';
-import createMemoryStore from 'memorystore';
-import createFileStore from 'session-file-store';
-import express from 'express';
-import helmet from 'helmet';
-import hpp from 'hpp';
-import morgan from 'morgan';
-import passport from 'passport';
-import { Strategy, VerifiedCallback } from 'passport-saml';
-import bodyParser from 'body-parser';
-import { useExpressServer, getMetadataArgsStorage } from 'routing-controllers';
-import { routingControllersToSpec } from 'routing-controllers-openapi';
-import swaggerUi from 'swagger-ui-express';
 import {
   APP_NAME,
   BASE_URL_PREFIX,
@@ -25,6 +6,7 @@ import {
   NODE_ENV,
   ORIGIN,
   PORT,
+  SAML_AUDIENCE,
   SAML_CALLBACK_URL,
   SAML_ENTRY_SSO,
   SAML_FAILURE_REDIRECT,
@@ -38,14 +20,33 @@ import {
   SWAGGER_ENABLED,
 } from '@config';
 import errorMiddleware from '@middlewares/error.middleware';
+import { Strategy, VerifiedCallback } from '@node-saml/passport-saml';
 import { logger, stream } from '@utils/logger';
-import { Profile } from './interfaces/profile.interface';
-import { HttpException } from './exceptions/HttpException';
-import { join } from 'path';
-import { isValidUrl } from './utils/util';
-import { additionalConverters } from './utils/custom-validation-classes';
-import { User } from './interfaces/users.interface';
+import bodyParser from 'body-parser';
+import { defaultMetadataStorage } from 'class-transformer/cjs/storage';
+import { validationMetadatasToSchemas } from 'class-validator-jsonschema';
+import compression from 'compression';
+import cookieParser from 'cookie-parser';
 import cors from 'cors';
+import express from 'express';
+import session from 'express-session';
+import { existsSync, mkdirSync } from 'fs';
+import helmet from 'helmet';
+import hpp from 'hpp';
+import createMemoryStore from 'memorystore';
+import morgan from 'morgan';
+import passport from 'passport';
+import { join } from 'path';
+import 'reflect-metadata';
+import { getMetadataArgsStorage, useExpressServer } from 'routing-controllers';
+import { routingControllersToSpec } from 'routing-controllers-openapi';
+import createFileStore from 'session-file-store';
+import swaggerUi from 'swagger-ui-express';
+import { HttpException } from './exceptions/HttpException';
+import { Profile } from './interfaces/profile.interface';
+import { User } from './interfaces/users.interface';
+import { additionalConverters } from './utils/custom-validation-classes';
+import { isValidUrl } from './utils/util';
 
 const corsWhitelist = ORIGIN.split(',');
 
@@ -73,10 +74,12 @@ const samlStrategy = new Strategy(
     // decryptionPvk: SAML_PRIVATE_KEY,
     privateKey: SAML_PRIVATE_KEY,
     // Identity Provider's public key
-    cert: SAML_IDP_PUBLIC_CERT,
+    idpCert: SAML_IDP_PUBLIC_CERT,
     issuer: SAML_ISSUER,
     wantAssertionsSigned: false,
+    wantAuthnResponseSigned: false,
     acceptedClockSkewMs: 1000,
+    audience: false,
     logoutCallbackUrl: SAML_LOGOUT_CALLBACK_URL,
   },
   async function (profile: Profile, done: VerifiedCallback) {
@@ -132,6 +135,9 @@ const samlStrategy = new Strategy(
       }
       done(err);
     }
+  },
+  async function (profile: Profile, done: VerifiedCallback) {
+    return done(null, {});
   },
 );
 
@@ -371,7 +377,9 @@ class App {
       },
     });
 
-    this.app.use(`${BASE_URL_PREFIX}/swagger.json`, (req, res) => res.json(spec));
+    this.app.use(`${BASE_URL_PREFIX}/swagger.json`, (req: express.Request, res: express.Response) => {
+      res.json(spec);
+    });
     this.app.use(`${BASE_URL_PREFIX}/api-docs`, swaggerUi.serve, swaggerUi.setup(spec));
   }
 

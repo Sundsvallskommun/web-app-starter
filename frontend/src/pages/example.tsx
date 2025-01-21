@@ -2,13 +2,14 @@ import DefaultLayout from '@layouts/default-layout/default-layout.component';
 import Main from '@layouts/main/main.component';
 import { useUserStore } from '@services/user-service/user-service';
 import { Link } from '@sk-web-gui/react';
-import NextLink from 'next/link';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
+import NextLink from 'next/link';
 import { capitalize } from 'underscore.string';
+import { useShallow } from 'zustand/react/shallow';
 
 export const Exempelsida: React.FC = () => {
-  const user = useUserStore((s) => s.user);
+  const user = useUserStore(useShallow((s) => s.user));
   const { t } = useTranslation();
   console.log('user', user);
   return (
