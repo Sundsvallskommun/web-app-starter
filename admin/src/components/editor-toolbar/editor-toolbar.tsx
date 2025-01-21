@@ -9,8 +9,8 @@ import { useTranslation } from 'react-i18next';
 import { capitalize } from 'underscore.string';
 
 interface ToolbarProps {
+  resource: ResourceName;
   id?: number;
-  resource?: ResourceName;
   isDirty?: boolean;
 }
 

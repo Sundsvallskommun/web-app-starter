@@ -1,13 +1,14 @@
 import { defaultInformationFields } from '@config/defaults';
 import resources from '@config/resources';
+import { Resource } from '@interfaces/resource';
+import { ResourceName } from '@interfaces/resource-name';
 import { Button, cx, FormControl, FormLabel, Input } from '@sk-web-gui/react';
-import { useFormContext } from 'react-hook-form';
+import { fieldpathWithoutIndex } from '@utils/fieldpath-without-index';
+import { Minus } from 'lucide-react';
+import { FieldValues, useFormContext } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { capitalize } from 'underscore.string';
 import { EditResourceArray } from './edit-resource-array.component';
-import { Minus } from 'lucide-react';
-import { fieldpathWithoutIndex } from '@utils/fieldpath-without-index';
-import { ResourceName } from '@interfaces/resource-name';
 
 interface EditResourceObjectProps {
   property: string;
@@ -28,20 +29,20 @@ export const EditResourceObject: React.FC<EditResourceObjectProps> = ({
   removable,
   onRemove,
 }) => {
-  const { create, update, requiredFields } = resources[resource];
+  const { requiredFields } = resources[resource] || {};
   const level = _level > 6 ? 6 : _level;
 
   const { t } = useTranslation();
 
-  type CreateType = Parameters<typeof create>[0];
-  type UpdateType = Parameters<typeof update>[1];
+  type CreateType = Parameters<NonNullable<Resource<FieldValues>['create']>>[0];
+  type UpdateType = Parameters<NonNullable<Resource<FieldValues>['update']>>[1];
   type DataType = CreateType | UpdateType;
 
   const dataTypeKey = parents ? `${parents}.${property}` : property;
   const i18nKey = fieldpathWithoutIndex(dataTypeKey);
 
   const { register, watch } = useFormContext<DataType>();
-  const formdata = watch(dataTypeKey as keyof DataType);
+  const formdata = watch(dataTypeKey as keyof DataType) as DataType;
 
   const Headercomp: React.ElementType = `h${level}` as React.ElementType;
 
@@ -62,9 +63,11 @@ export const EditResourceObject: React.FC<EditResourceObjectProps> = ({
             rounded
             color="error"
             iconButton
-            aria-label={capitalize(t('common:remove_resource'), {
-              resource: t(`${resource}:properties.${i18nKey}.DEFAULT`),
-            })}
+            aria-label={capitalize(
+              t('common:remove_resource', {
+                resource: t(`${resource}:properties.${i18nKey}.DEFAULT`),
+              })
+            )}
             onClick={() => onRemove && onRemove()}
           >
             <Minus />
@@ -75,8 +78,9 @@ export const EditResourceObject: React.FC<EditResourceObjectProps> = ({
         Object.keys(formdata)
           .filter((key) => !defaultInformationFields.includes(key))
           .map((key, index) => {
-            const type = typeof formdata[key];
-            const isRequired = fieldpathWithoutIndex(requiredFields).includes(`${i18nKey}.${key}`);
+            const type = typeof formdata[key as keyof DataType];
+            const isRequired =
+              requiredFields ? fieldpathWithoutIndex(requiredFields)?.includes(`${i18nKey}.${key}`) : false;
             if (type === 'string' || type === 'number') {
               return (
                 <FormControl key={`res-object-${index}`} required={isRequired}>
@@ -89,7 +93,7 @@ export const EditResourceObject: React.FC<EditResourceObjectProps> = ({
               );
             }
             if (type === 'object') {
-              return Array.isArray(formdata[key]) ?
+              return Array.isArray(formdata[key as keyof DataType]) ?
                   <EditResourceArray
                     key={`res-object-${index}`}
                     resource={resource}
