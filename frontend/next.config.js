@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 const envalid = require('envalid');
 const { i18n } = require('./next-i18next.config');
 
