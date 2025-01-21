@@ -8,6 +8,7 @@ import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import { capitalize } from 'underscore.string';
 import { apiURL } from '@utils/api-url';
+import { GetServerSideProps } from 'next';
 
 export default function Start() {
   const router = useRouter();
@@ -21,10 +22,10 @@ export default function Start() {
   // Turn on/off automatic login
   const autoLogin = true;
 
-  const initalFocus = useRef(null);
+  const initalFocus = useRef<HTMLButtonElement>(null);
   const setInitalFocus = () => {
     setTimeout(() => {
-      initalFocus.current && initalFocus.current.focus();
+      initalFocus.current?.focus();
     });
   };
 
@@ -92,7 +93,7 @@ export default function Start() {
   );
 }
 
-export const getServerSideProps = async ({ locale }) => ({
+export const getServerSideProps: GetServerSideProps = async ({ locale }) => ({
   props: {
     ...(await serverSideTranslations(locale, ['common', 'login', 'crud'])),
   },

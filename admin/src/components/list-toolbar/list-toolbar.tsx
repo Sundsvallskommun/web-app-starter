@@ -29,12 +29,14 @@ export const ListToolbar: React.FC<ListToolbarProps> = ({ onRefresh, resource, p
 
   useEffect(() => {
     reset({ headers });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resource]);
 
   useEffect(() => {
     if (!selectedHeaders) {
       reset({ headers });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [headers]);
 
   useEffect(() => {
@@ -43,6 +45,7 @@ export const ListToolbar: React.FC<ListToolbarProps> = ({ onRefresh, resource, p
         setHeaders({ [resource]: selectedHeaders });
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedHeaders, properties, setHeaders]);
 
   return (
@@ -77,7 +80,7 @@ export const ListToolbar: React.FC<ListToolbarProps> = ({ onRefresh, resource, p
               <PopupMenu.Items>
                 {properties.map((prop, index) => (
                   <PopupMenu.Item key={`tab-prop-${index}`}>
-                    <Checkbox name="tableheaders" labelPosition="left" value={prop} {...register('headers')}>
+                    <Checkbox labelPosition="left" value={prop} {...register('headers')}>
                       {capitalize(
                         t(`${defaultInformationFields.includes(prop) ? 'common:' : `${resource}:properties.`}${prop}`)
                       )}

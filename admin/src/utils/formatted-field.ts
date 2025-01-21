@@ -1,6 +1,7 @@
 import { dateFields } from '@config/defaults';
 import dayjs from 'dayjs';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type GetFormattedFields = (object: Record<string | number, any>, deep?: boolean) => Record<string | number, any>;
 
 export const getFormattedFields: GetFormattedFields = (object, deep) => {

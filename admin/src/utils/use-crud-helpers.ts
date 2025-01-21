@@ -3,11 +3,11 @@ import { useSnackbar } from '@sk-web-gui/react';
 import { useTranslation } from 'react-i18next';
 import { capitalize } from 'underscore.string';
 
-export const useCrudHelper = (resource) => {
+export const useCrudHelper = (resource: string) => {
   const message = useSnackbar();
   const { t } = useTranslation();
 
-  const handleGetOne = async (getOne: () => ResourceResponse<any>) => {
+  const handleGetOne = async <TData = unknown>(getOne: () => ResourceResponse<TData>): Promise<TData | undefined> => {
     const name = t(`${resource}:name_one`);
     try {
       const result = await getOne();
@@ -17,7 +17,9 @@ export const useCrudHelper = (resource) => {
     }
   };
 
-  const handleGetMany = async (getMany: () => ResourceResponse<any[]>): Promise<any[]> => {
+  const handleGetMany = async <TData = unknown>(
+    getMany: () => ResourceResponse<TData[]>
+  ): Promise<TData[] | undefined> => {
     const name = t(`${resource}:name_many`);
     try {
       const result = await getMany();
@@ -27,7 +29,7 @@ export const useCrudHelper = (resource) => {
     }
   };
 
-  const handleCreate = async (create: () => ResourceResponse<any>) => {
+  const handleCreate = async <TData = unknown>(create: () => ResourceResponse<TData>): Promise<TData | undefined> => {
     const name = t(`${resource}:name_one`);
     try {
       const result = await create();
@@ -40,7 +42,7 @@ export const useCrudHelper = (resource) => {
     }
   };
 
-  const handleUpdate = async (update: () => ResourceResponse<any>) => {
+  const handleUpdate = async <TData = unknown>(update: () => ResourceResponse<TData>): Promise<TData | undefined> => {
     const name = t(`${resource}:name_one`);
     try {
       const result = await update();
@@ -53,7 +55,7 @@ export const useCrudHelper = (resource) => {
     }
   };
 
-  const handleRemove = async (remove: () => ResourceResponse<any>): Promise<any> => {
+  const handleRemove = async <TData = unknown>(remove: () => ResourceResponse<TData>): Promise<TData | undefined> => {
     const name = t(`${resource}:name_one`);
     try {
       const result = await remove();

@@ -3,18 +3,21 @@ import { EditorToolbar } from '@components/editor-toolbar/editor-toolbar';
 import LoaderFullScreen from '@components/loader/loader-fullscreen';
 import { defaultInformationFields } from '@config/defaults';
 import resources from '@config/resources';
+import { Resource, ResourceResponse } from '@interfaces/resource';
+import { ResourceName } from '@interfaces/resource-name';
 import EditLayout from '@layouts/edit-layout/edit-layout.component';
 import { getFormattedFields } from '@utils/formatted-field';
 import { useRouteGuard } from '@utils/routeguard.hook';
 import { stringToResourceName } from '@utils/stringToResourceName';
 import { useCrudHelper } from '@utils/use-crud-helpers';
 import { useResource } from '@utils/use-resource';
+import { GetServerSideProps } from 'next';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import { useParams } from 'next/navigation';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
+import { FieldValues, FormProvider, useForm } from 'react-hook-form';
 import { capitalize } from 'underscore.string';
 
 export const EditAssistant: React.FC = () => {
@@ -27,13 +30,13 @@ export const EditAssistant: React.FC = () => {
     router.push('/');
   }
 
-  const { create, update, getOne, defaultValues } = resources[resource];
-  const { refresh } = useResource(resource);
+  const { create, update, getOne, defaultValues } = resources[resource as ResourceName];
+  const { refresh } = useResource(resource as ResourceName);
 
-  const { handleGetOne, handleCreate, handleUpdate } = useCrudHelper(resource);
+  const { handleGetOne, handleCreate, handleUpdate } = useCrudHelper(resource as ResourceName);
 
-  type UpdateType = Parameters<typeof update>[1];
-  type CreateType = Parameters<typeof create>[0];
+  type CreateType = Parameters<NonNullable<Resource<FieldValues>['create']>>[0];
+  type UpdateType = Parameters<NonNullable<Resource<FieldValues>['update']>>[1];
   type DataType = CreateType | UpdateType;
 
   const form = useForm<DataType>({
@@ -75,12 +78,14 @@ export const EditAssistant: React.FC = () => {
       setIsNew(true);
       setLoaded(true);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   useEffect(() => {
     if (navigate) {
       router.push(`/${resource}/${formdata?.id}`);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate]);
 
   useEffect(() => {
@@ -90,7 +95,8 @@ export const EditAssistant: React.FC = () => {
   }, [formdata?.id, isNew, isDirty]);
 
   const onSubmit = (data: DataType) => {
-    const createFunc: (data: DataType) => ReturnType<typeof create> = create;
+    const createFunc: (data: DataType) => ReturnType<NonNullable<Resource<FieldValues>['create']>> =
+      create as NonNullable<Resource<FieldValues>['create']>;
     switch (isNew) {
       case true:
         handleCreate(() => createFunc(data as CreateType)).then((res) => {
@@ -103,7 +109,7 @@ export const EditAssistant: React.FC = () => {
         break;
       case false:
         if (id) {
-          handleUpdate(() => update(id, data as UpdateType)).then((res) => {
+          handleUpdate(() => update?.(id, data) as ResourceResponse<Partial<FieldValues>>).then((res) => {
             reset(res);
             refresh();
           });
@@ -112,7 +118,7 @@ export const EditAssistant: React.FC = () => {
     }
   };
 
-  return !loaded ?
+  return !loaded || !resource ?
       <LoaderFullScreen />
     : <EditLayout
         headerInfo={
@@ -143,7 +149,7 @@ export const EditAssistant: React.FC = () => {
       </EditLayout>;
 };
 
-export const getServerSideProps = async ({ locale }) => ({
+export const getServerSideProps: GetServerSideProps = async ({ locale }) => ({
   props: {
     ...(await serverSideTranslations(locale, ['common', 'crud', 'layout', ...Object.keys(resources)])),
   },

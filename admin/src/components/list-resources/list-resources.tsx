@@ -14,7 +14,7 @@ import { useShallow } from 'zustand/react/shallow';
 interface ListResourcesProps {
   resource: ResourceName;
   headers?: AutoTableHeader[];
-  data?: Array<any>;
+  data?: Array<Record<string, unknown>>;
 }
 
 export const ListResources: React.FC<ListResourcesProps> = ({ resource, headers: _headers, data }) => {
@@ -33,12 +33,13 @@ export const ListResources: React.FC<ListResourcesProps> = ({ resource, headers:
         ],
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storeHeaders, data]);
 
   const headers = useMemo(
     () =>
       _headers ||
-      storeHeaders?.reduce((headers, key) => {
+      storeHeaders?.reduce<AutoTableHeader[]>((headers, key) => {
         if (data) {
           const type = typeof data?.[0]?.[key];
           switch (type) {
@@ -79,8 +80,11 @@ export const ListResources: React.FC<ListResourcesProps> = ({ resource, headers:
             default:
               return headers;
           }
+        } else {
+          return headers;
         }
       }, []),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [storeHeaders, _headers, data]
   );
 
@@ -104,16 +108,16 @@ export const ListResources: React.FC<ListResourcesProps> = ({ resource, headers:
       typeof header === 'object' ?
         { ...header, label: header?.label || capitalize(t(`${resource}:properties.${header}`)) }
       : {
-          label: t(`${resource}:properties.${header}`),
+          label: t(`${resource}:properties.${header}`, { defaultValue: header }),
           property: header,
         }
     ) || [];
 
-  const formattedData = useMemo(() => data.map((row) => getFormattedFields(row)), [data]);
+  const formattedData = useMemo(() => data?.map((row) => getFormattedFields(row)), [data]);
 
   return (
     <div>
-      {formattedData.length > 0 ?
+      {formattedData && formattedData?.length > 0 ?
         <AutoTable
           pageSize={15}
           autodata={formattedData}

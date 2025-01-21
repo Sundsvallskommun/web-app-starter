@@ -1,5 +1,5 @@
 import resources from '@config/resources';
-import { MenuVertical } from '@sk-web-gui/react';
+import { MenuIndex, MenuVertical } from '@sk-web-gui/react';
 import NextLink from 'next/link';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -19,6 +19,7 @@ export const Menu = () => {
     } else {
       setCurrent('');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [window]);
 
   useEffect(() => {
@@ -28,12 +29,16 @@ export const Menu = () => {
   }, [current]);
 
   return (
-    <MenuVertical.Provider current={current} setCurrent={setCurrent} rootMenuId="resources">
+    <MenuVertical.Provider
+      current={current}
+      setCurrent={setCurrent as React.Dispatch<React.SetStateAction<MenuIndex>>}
+      rootMenuId="resources"
+    >
       <MenuVertical.Nav>
         <MenuVertical.Label>{capitalize(t('common:resources'))}</MenuVertical.Label>
         <MenuVertical>
           {...Object.keys(resources).map((resourcename, index) => {
-            const resource = resources[resourcename];
+            const resource = resources[resourcename as keyof typeof resources];
             return (
               <MenuVertical.Item key={`mainmenu-${index}`} menuIndex={`${resource.name}-parent`}>
                 <MenuVertical>

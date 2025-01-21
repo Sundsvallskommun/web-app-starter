@@ -1,6 +1,6 @@
-import { FieldPath } from 'react-hook-form';
+import { FieldPath, FieldValues } from 'react-hook-form';
 
-export const fieldpathWithoutIndex = (fieldpath: FieldPath<any> | Array<FieldPath<any>>) => {
+export const fieldpathWithoutIndex = (fieldpath: FieldPath<FieldValues> | Array<FieldPath<FieldValues>>) => {
   const replacer = (string: string) => string.replace(/[.]\d+/g, '');
   if (typeof fieldpath === 'string') {
     return replacer(fieldpath);
