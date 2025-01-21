@@ -29,7 +29,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.status(200).send(health);
   } catch (error) {
     res.status(500).send({
-      error: error.toString(),
+      error: (error as object).toString(),
       status: 'ERROR!',
     });
   }
