@@ -8,7 +8,7 @@ export const Index: React.FC = (props) => {
 
 export const getServerSideProps: GetServerSideProps = async ({ locale }) => ({
   props: {
-    ...(await serverSideTranslations(locale, ['common', 'example'])),
+    ...(await serverSideTranslations(locale, ['common', 'example', 'layout'])),
   },
 });
 
