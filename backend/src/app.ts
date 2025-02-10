@@ -323,7 +323,10 @@ class App {
           failureRedirect.search = queries.toString();
           res.redirect(failureRedirect.toString());
         } else if (!user) {
-          res.redirect('/saml/login');
+          const failMessage = new URLSearchParams(failureRedirect.searchParams);
+          failMessage.append('failMessage', 'NO_USER');
+          failureRedirect.search = failMessage.toString();
+          res.redirect(failureRedirect.toString());
         } else {
           req.login(user, loginErr => {
             if (loginErr) {

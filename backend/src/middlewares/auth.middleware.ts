@@ -6,10 +6,10 @@ const authMiddleware = async (req: Request, res: Response, next: NextFunction) =
     if (req.isAuthenticated()) {
       next();
     } else {
-      next(new HttpException(401, 'Not Authorized'));
+      next(new HttpException(401, 'NOT_AUTHORIZED'));
     }
   } catch (error) {
-    next(new HttpException(401, 'Failed to authorize'));
+    next(new HttpException(401, 'AUTH_FAILED'));
   }
 };
 
