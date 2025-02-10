@@ -79,7 +79,7 @@ const samlStrategy = new Strategy(
     wantAssertionsSigned: false,
     wantAuthnResponseSigned: false,
     acceptedClockSkewMs: 1000,
-    audience: SAML_AUDIENCE,
+    audience: false,
     logoutCallbackUrl: SAML_LOGOUT_CALLBACK_URL,
   },
   async function (profile: Profile, done: VerifiedCallback) {
