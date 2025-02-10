@@ -8,6 +8,7 @@ import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import { apiURL } from '@utils/api-url';
 import { GetServerSideProps } from 'next';
+import { capitalize } from 'underscore.string';
 
 // Turn on/off automatic login
 const autoLogin = true;
@@ -87,7 +88,7 @@ export default function Start() {
             </div>
 
             <Button inverted onClick={() => onLogin()} ref={initalFocus} data-cy="loginButton">
-              {t('common:login')}
+              {capitalize(t('common:login'))}
             </Button>
 
             {errorMessage && <FormErrorMessage className="mt-lg">{errorMessage}</FormErrorMessage>}
