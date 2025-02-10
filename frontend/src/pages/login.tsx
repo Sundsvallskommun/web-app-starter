@@ -9,17 +9,18 @@ import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import { apiURL } from '@utils/api-url';
 import { GetServerSideProps } from 'next';
 
+// Turn on/off automatic login
+const autoLogin = true;
+
 export default function Start() {
   const router = useRouter();
   const [errorMessage, setErrorMessage] = useState('');
-  const [mounted, setMounted] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const { t } = useTranslation();
 
   const params = new URLSearchParams(window.location.search);
   const isLoggedOut = params.get('loggedout') === '';
   const failMessage = params.get('failMessage');
-  // Turn on/off automatic login
-  const autoLogin = true;
 
   const initalFocus = useRef<HTMLButtonElement>(null);
   const setInitalFocus = () => {
@@ -44,7 +45,6 @@ export default function Start() {
   useEffect(() => {
     setInitalFocus();
     if (!router.isReady) return;
-    setTimeout(() => setMounted(true), 500); // to not flash the login-screen on autologin
     if (isLoggedOut) {
       router.push(
         {
@@ -54,19 +54,26 @@ export default function Start() {
         { shallow: true }
       );
     } else {
-      if (!failMessage && autoLogin) {
+      if (failMessage === 'NOT_AUTHORIZED' && autoLogin) {
         // autologin
         onLogin();
       } else if (failMessage) {
         setErrorMessage(t(`login:errors.${failMessage}`));
+        setIsLoading(false);
+      } else {
+        setIsLoading(false);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router.isReady]);
 
-  if (!mounted && !failMessage) {
+  if (isLoading) {
     // to not flash the login-screen on autologin
-    return <LoaderFullScreen />;
+    return (
+      <EmptyLayout title={`${process.env.NEXT_PUBLIC_APP_NAME} - Logga In - Laddar..`}>
+        <LoaderFullScreen />
+      </EmptyLayout>
+    );
   }
 
   return (
