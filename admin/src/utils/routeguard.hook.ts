@@ -13,8 +13,8 @@ export function useRouteGuard(
   }
 ): {
   confirm: (options?: {
-    warningTitle?: string;
-    warningText?: string;
+    warningTitle: string;
+    warningText: string;
     confirmLabel?: string;
     dismissLabel?: string;
   }) => Promise<boolean>;
@@ -23,8 +23,8 @@ export function useRouteGuard(
   const [active, setActive] = useState<boolean>(false);
   const title = options?.warningTitle || t('common:unsaved_changes');
   const text = options?.warningText || t('common:do_you_want_to_leave');
-  const confirmLabel = options?.confirmLabel || null;
-  const dismissLabel = options?.dismissLabel || null;
+  const confirmLabel = options?.confirmLabel || undefined;
+  const dismissLabel = options?.dismissLabel || undefined;
   const { showConfirmation } = useConfirm();
 
   useEffect(() => {
@@ -62,7 +62,12 @@ export function useRouteGuard(
   }, [active, showConfirmation, text, title, confirmLabel, dismissLabel]);
 
   async function confirmer(
-    options = {
+    options: {
+      warningTitle: string;
+      warningText: string;
+      confirmLabel?: string;
+      dismissLabel?: string;
+    } = {
       warningTitle: title,
       warningText: text,
       confirmLabel: confirmLabel,

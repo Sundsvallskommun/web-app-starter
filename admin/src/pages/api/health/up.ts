@@ -11,7 +11,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const userAuth64 = Buffer.from(`${authUsername}:${authPassword}`).toString('base64');
 
   if (requireAuth && authorization !== `Basic ${userAuth64}`) {
-    res.status(401).send('Not Authorized');
+    res.status(401).send('NOT_AUTHORIZED');
     return;
   }
 
@@ -19,7 +19,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const health = await apiService.get('health/up').then((res) => res.data);
 
     res.status(200).send(health);
-  } catch (error) {
+  } catch {
     res.status(500).send({
       status: 'ERROR!',
     });

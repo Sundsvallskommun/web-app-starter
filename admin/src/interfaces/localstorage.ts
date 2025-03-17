@@ -6,7 +6,8 @@ export type TableProperty = string;
 export type Headers = Partial<Record<ResourceName, Array<TableProperty>>>;
 
 export interface DataStorage {
-  data?: any[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data?: Record<string, any>[];
   loaded: boolean;
   loading: boolean;
 }
@@ -19,7 +20,8 @@ export interface LocalStorage {
   headers: Headers;
   setHeaders: (headers: Headers) => void;
   resourceData: ResourceData;
-  setData: (resource: ResourceName, data: any[]) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  setData: (resource: ResourceName, data: Record<string, any>[]) => void;
   setLoaded: (resource: ResourceName, loaded: boolean) => void;
   setLoading: (resource: ResourceName, loading: boolean) => void;
 }

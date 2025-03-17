@@ -28,7 +28,7 @@ export default function DefaultLayout({ title, postTitle, headerSubtitle, childr
 
   const setFocusToMain = () => {
     const contentElement = document.getElementById('content');
-    contentElement.focus();
+    contentElement?.focus();
   };
 
   const colorSchemeIcons: Record<ColorSchemeMode, JSX.Element> = {
@@ -85,16 +85,16 @@ export default function DefaultLayout({ title, postTitle, headerSubtitle, childr
                         </PopupMenu.Button>
                         <PopupMenu.Panel>
                           <PopupMenu.Items>
-                            {Object.keys(colorSchemeIcons).map((scheme: ColorSchemeMode) => (
+                            {Object.keys(colorSchemeIcons).map((scheme) => (
                               <PopupMenu.Item key={`cs-${scheme}`}>
                                 <button
-                                  onClick={() => setColorScheme(scheme)}
+                                  onClick={() => setColorScheme(scheme as ColorSchemeMode)}
                                   role="menuitemradio"
                                   aria-checked={scheme === colorScheme}
                                   className="!justify-between min-w-[20rem]"
                                 >
                                   <span className="flex gap-12">
-                                    {colorSchemeIcons[scheme]}
+                                    {colorSchemeIcons[scheme as ColorSchemeMode]}
                                     {capitalize(t(`layout:color_schemes.${scheme}`))}
                                   </span>
                                   {scheme === colorScheme && <Icon.Padded size={18} rounded icon={<Check />} />}

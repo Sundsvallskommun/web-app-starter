@@ -31,12 +31,14 @@ export const useResource = (resource: ResourceName) => {
         })
         .catch(() => setLoading(resource, false));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resource]);
 
   useEffect(() => {
     if (!loaded || !resourceData) {
       refresh();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resource]);
 
   return { data, loaded, loading, refresh };
