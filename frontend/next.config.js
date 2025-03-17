@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 const envalid = require('envalid');
 const { i18n } = require('./next-i18next.config');
 
@@ -35,7 +36,7 @@ module.exports = withBundleAnalyzer({
   },
   transpilePackages: ['lucide-react'],
   experimental: {
-    optimizePackageImports: ['lucide-react', '@sk-web-gui'],
+    optimizePackageImports: ['@sk-web-gui'],
   },
   async rewrites() {
     return [{ source: '/napi/:path*', destination: '/api/:path*' }];

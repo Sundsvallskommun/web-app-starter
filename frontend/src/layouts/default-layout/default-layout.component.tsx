@@ -33,7 +33,7 @@ export default function DefaultLayout({
 
   const setFocusToMain = () => {
     const contentElement = document.getElementById('content');
-    contentElement.focus();
+    contentElement?.focus();
   };
 
   const handleLogoClick = () => {

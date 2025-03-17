@@ -1,4 +1,7 @@
 {
+  "eslint.validate": ["html", "javascript", "typescript", "javascriptreact", "typescriptreact"],
+  "eslint.enable": true,
+  "eslint.alwaysShowStatus": true,
   "i18n-ally.localesPaths": ["frontend/public/locales"],
   "i18n-ally.sourceLanguage": "sv",
   "i18n-ally.namespace": true,

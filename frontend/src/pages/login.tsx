@@ -7,23 +7,26 @@ import { appURL } from '@utils/app-url';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import { apiURL } from '@utils/api-url';
+import { GetServerSideProps } from 'next';
+import { capitalize } from 'underscore.string';
+
+// Turn on/off automatic login
+const autoLogin = true;
 
 export default function Start() {
   const router = useRouter();
   const [errorMessage, setErrorMessage] = useState('');
-  const [mounted, setMounted] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const { t } = useTranslation();
 
   const params = new URLSearchParams(window.location.search);
   const isLoggedOut = params.get('loggedout') === '';
   const failMessage = params.get('failMessage');
-  // Turn on/off automatic login
-  const autoLogin = true;
 
-  const initalFocus = useRef(null);
+  const initalFocus = useRef<HTMLButtonElement>(null);
   const setInitalFocus = () => {
     setTimeout(() => {
-      initalFocus.current && initalFocus.current.focus();
+      initalFocus?.current?.focus();
     });
   };
 
@@ -43,7 +46,6 @@ export default function Start() {
   useEffect(() => {
     setInitalFocus();
     if (!router.isReady) return;
-    setTimeout(() => setMounted(true), 500); // to not flash the login-screen on autologin
     if (isLoggedOut) {
       router.push(
         {
@@ -53,19 +55,26 @@ export default function Start() {
         { shallow: true }
       );
     } else {
-      if (!failMessage && autoLogin) {
+      if (failMessage === 'NOT_AUTHORIZED' && autoLogin) {
         // autologin
         onLogin();
       } else if (failMessage) {
         setErrorMessage(t(`login:errors.${failMessage}`));
+        setIsLoading(false);
+      } else {
+        setIsLoading(false);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router.isReady]);
 
-  if (!mounted && !failMessage) {
+  if (isLoading) {
     // to not flash the login-screen on autologin
-    return <LoaderFullScreen />;
+    return (
+      <EmptyLayout title={`${process.env.NEXT_PUBLIC_APP_NAME} - Logga In - Laddar..`}>
+        <LoaderFullScreen />
+      </EmptyLayout>
+    );
   }
 
   return (
@@ -79,7 +88,7 @@ export default function Start() {
             </div>
 
             <Button inverted onClick={() => onLogin()} ref={initalFocus} data-cy="loginButton">
-              {t('common:login')}
+              {capitalize(t('common:login'))}
             </Button>
 
             {errorMessage && <FormErrorMessage className="mt-lg">{errorMessage}</FormErrorMessage>}
@@ -90,7 +99,7 @@ export default function Start() {
   );
 }
 
-export const getServerSideProps = async ({ locale }) => ({
+export const getServerSideProps: GetServerSideProps = async ({ locale }) => ({
   props: {
     ...(await serverSideTranslations(locale, ['common', 'login'])),
   },

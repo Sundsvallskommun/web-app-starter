@@ -12,7 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const userAuth64 = Buffer.from(`${authUsername}:${authPassword}`).toString('base64');
 
   if (requireAuth && authorization !== `Basic ${userAuth64}`) {
-    res.status(401).send('Not Authorized');
+    res.status(401).send('NOT_AUTHORIZED');
     return;
   }
 
@@ -29,7 +29,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.status(200).send(health);
   } catch (error) {
     res.status(500).send({
-      error: error.toString(),
+      error: (error as object).toString(),
       status: 'ERROR!',
     });
   }
