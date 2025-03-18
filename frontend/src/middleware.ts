@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { i18nRouter } from 'next-i18n-router';
 import { apiURL } from '@utils/api-url';
 import i18nConfig from '@app/i18nConfig';
-
-const protectedRoutes = JSON.parse(process.env.NEXT_PUBLIC_PROTECTED_ROUTES as string);
+import { protectedRoutes } from '@utils/protected-routes';
 
 export async function middleware(req: NextRequest) {
   const {
