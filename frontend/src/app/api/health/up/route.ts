@@ -1,15 +1,15 @@
 import axios from 'axios';
 import https from 'https';
-import type { NextApiRequest } from 'next';
+import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 const requireAuth = process.env.HEALTH_AUTH === 'true';
 const authUsername = process.env.HEALTH_USERNAME;
 const authPassword = process.env.HEALTH_PASSWORD;
 
-export const GET = async (req: NextApiRequest) => {
-  const { headers: resHeaders } = req;
-  const { authorization } = resHeaders;
+export const GET = async () => {
+  const headersList = await headers();
+  const authorization = headersList.get('authorization');
   const userAuth64 = Buffer.from(`${authUsername}:${authPassword}`).toString('base64');
 
   if (requireAuth && authorization !== `Basic ${userAuth64}`) {
