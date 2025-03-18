@@ -5,20 +5,22 @@ import initLocalization from '../i18n';
 
 interface LocaleLayoutProps {
   children: ReactNode;
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }
 
 const namespaces = ['common', 'paths', 'layout', 'login', 'example'];
 
-const LocaleLayout = async ({ children, params: { locale } }: LocaleLayoutProps) => {
+const LocaleLayout = async ({ children, params }: LocaleLayoutProps) => {
+  const { locale } = await params;
   const { resources } = await initLocalization(locale, namespaces);
 
   return <LocalizationProvider {...{ locale, resources, namespaces }}>{children}</LocalizationProvider>;
 };
 
-export const generateMetadata = async ({ params: { locale } }: LocaleLayoutProps) => {
+export const generateMetadata = async ({ params }: LocaleLayoutProps) => {
+  const { locale } = await params;
   const { t } = await initLocalization(locale, namespaces);
-  const path = headers().get('x-path');
+  const path = (await headers()).get('x-path');
 
   const pathName =
     !path ? null : (
