@@ -1,13 +1,12 @@
+'use client';
+
 import { CookieConsent, Footer, Header, Link } from '@sk-web-gui/react';
-import Head from 'next/head';
 import NextLink from 'next/link';
-import { useRouter } from 'next/router';
-import { useTranslation } from 'next-i18next';
+import { useRouter } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 
 interface DefaultLayoutProps {
   children: React.ReactNode;
-  title?: string;
-  postTitle?: string;
   headerTitle?: string;
   headerSubtitle?: string;
   preContent?: React.ReactNode;
@@ -16,8 +15,6 @@ interface DefaultLayoutProps {
 }
 
 export default function DefaultLayout({
-  title,
-  postTitle,
   headerTitle,
   headerSubtitle,
   children,
@@ -26,9 +23,6 @@ export default function DefaultLayout({
   logoLinkHref = '/',
 }: DefaultLayoutProps) {
   const router = useRouter();
-  const layoutTitle = `${process.env.NEXT_PUBLIC_APP_NAME}${headerSubtitle ? ` - ${headerSubtitle}` : ''}`;
-  const fullTitle = postTitle ? `${layoutTitle} - ${postTitle}` : `${layoutTitle}`;
-
   const { t } = useTranslation();
 
   const setFocusToMain = () => {
@@ -42,11 +36,6 @@ export default function DefaultLayout({
 
   return (
     <div className="DefaultLayout full-page-layout">
-      <Head>
-        <title>{title ? title : fullTitle}</title>
-        <meta name="description" content={`${process.env.NEXT_PUBLIC_APP_NAME}`} />
-      </Head>
-
       <NextLink href="#content" legacyBehavior passHref>
         <a onClick={setFocusToMain} accessKey="s" className="next-link-a" data-cy="systemMessage-a">
           {t('layout:header.goto_content')}
