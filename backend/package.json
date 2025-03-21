@@ -16,7 +16,8 @@
     "lint": "eslint --ignore-path .gitignore --ext .ts src/",
     "lint:fix": "npm run lint -- --fix",
     "deploy:prod": "npm run build && pm2 start ecosystem.config.js --only prod",
-    "deploy:dev": "pm2 start ecosystem.config.js --only dev"
+    "deploy:dev": "pm2 start ecosystem.config.js --only dev",
+    "type-check": "tsc --pretty --noEmit"
   },
   "dependencies": {
     "@prisma/client": "^5.12.1",
@@ -84,5 +85,9 @@
     "tsc-alias": "^1.8.10",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.7.2"
+  },
+  "resolutions": {
+    "@types/express": "^5.0.0",
+    "@types/express-serve-static-core": "^5.0.6"
   }
 }
