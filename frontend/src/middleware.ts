@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { i18nRouter } from 'next-i18n-router';
-import { apiURL } from '@utils/api-url';
 import i18nConfig from '@app/i18nConfig';
-import { protectedRoutes } from '@utils/protected-routes';
+import { envs } from '../middleware-envs';
 
 export async function middleware(req: NextRequest) {
   const {
@@ -10,14 +9,14 @@ export async function middleware(req: NextRequest) {
   } = req;
 
   if (pathname === '/admin') {
-    return NextResponse.redirect(new URL(process.env.ADMIN_URL as string));
+    return NextResponse.redirect(new URL(envs.adminUrl));
   }
 
-  if (protectedRoutes.includes(pathname)) {
+  if (envs.protectedRoutes.includes(pathname)) {
     const cookiName = 'connect.sid';
     const token = req.cookies.get(cookiName)?.value || '';
 
-    const { status } = await fetch(apiURL('/me'), {
+    const { status } = await fetch(`${envs.apiUrl}/me`, {
       cache: 'no-cache',
       headers: {
         Accept: 'application/json',
@@ -27,7 +26,7 @@ export async function middleware(req: NextRequest) {
     });
 
     if (status === 401) {
-      const absoluteUrl = new URL(`${process.env.BASE_PATH}/login?path=${pathname}`, origin);
+      const absoluteUrl = new URL(`${envs.basePath}/login?path=${pathname}`, origin);
       return NextResponse.redirect(absoluteUrl.toString());
     }
   }
