@@ -19,8 +19,9 @@
     "jest": "jest --watch",
     "jest:coverage": "jest --coverage",
     "test": "concurrently \"yarn jest\" \"yarn cypress\"",
-    "coverage": "npx nyc report --reporter=text-summary",
-    "test:coverage": "yarn cypress:headless",
+    "coverage": "yarn nyc report --reporter=text-summary",
+    "coverage:merge": "istanbul-merge --out coverage/summary/coverage-final.json coverage/cypress/coverage-final.json coverage/jest/coverage-final.json && nyc report --reporter=lcov -t coverage/summary --report-dir coverage/summary --check-coverage false",
+    "test:coverage": "yarn cypress:headless && yarn jest:coverage && yarn coverage:merge",
     "type-check": "tsc --pretty --noEmit"
   },
   "dependencies": {
@@ -76,6 +77,7 @@
     "eslint-plugin-jest": "^28.11.0",
     "eslint-plugin-react-refresh": "^0.4.19",
     "identity-obj-proxy": "^3.0.0",
+    "istanbul-merge": "^2.0.0",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "postcss": "^8.5.3",
