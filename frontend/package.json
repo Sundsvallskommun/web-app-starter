@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "node middleware-envs-generator.mjs",
+    "prebuild": "node middleware-envs-generator.mjs",
     "dev": "cross-env TEST=true next dev",
     "build": "next build",
     "build:test": "cross-env TEST=true next build",

@@ -17,6 +17,10 @@
 # production
 /build
 
+# quirks
+# middleware envs needs to be generated for edge runtime to work
+./middleware-envs.js
+
 # misc
 .DS_Store
 *.pem

@@ -4,30 +4,29 @@ import i18nConfig from '@app/i18nConfig';
 import { envs } from '../middleware-envs';
 
 export async function middleware(req: NextRequest) {
-  const {
-    nextUrl: { pathname, origin },
-  } = req;
+  const { pathname, origin } = req.nextUrl;
 
   if (pathname === '/admin') {
     return NextResponse.redirect(new URL(envs.adminUrl));
   }
 
   if (envs.protectedRoutes.includes(pathname)) {
-    const cookiName = 'connect.sid';
-    const token = req.cookies.get(cookiName)?.value || '';
+    const cookieName = 'connect.sid';
+    const token = req.cookies.get(cookieName)?.value || '';
 
-    const { status } = await fetch(`${envs.apiUrl}/me`, {
+    const response = await fetch(`${envs.apiUrl}/me`, {
       cache: 'no-cache',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
-        Cookie: `${cookiName}=${encodeURI(token)}`,
+        Cookie: `${cookieName}=${encodeURIComponent(token)}`,
       },
     });
 
-    if (status === 401) {
-      const absoluteUrl = new URL(`${envs.basePath}/login?path=${pathname}`, origin);
-      return NextResponse.redirect(absoluteUrl.toString());
+    if (response.status === 401) {
+      const loginUrl = new URL(`${envs.basePath}/login`, origin);
+      loginUrl.searchParams.set('path', pathname);
+      return NextResponse.redirect(loginUrl);
     }
   }
 
