@@ -1,6 +1,6 @@
 {
   "header": {
-    "gotoContent": "Hoppa till innehåll"
+    "goto_content": "Hoppa till innehåll"
   },
   "cookies": {
     "title": "Kakor på {{app}}",

@@ -17,10 +17,7 @@ const Exempelsida: React.FC = () => {
     <DefaultLayout>
       <Main>
         <div className="text-content">
-          <h1>
-            {capitalize(`${t('example:welcome')}
-            ${user.name ? ` ${user.name}` : ''}!`)}
-          </h1>
+          <h1>{`${capitalize(t('example:welcome'))}${user.name ? ` ${user.name}` : ''}!`}</h1>
           <p>{t('example:description')}</p>
           {user.name ?
             <NextLink href={`/logout`}>

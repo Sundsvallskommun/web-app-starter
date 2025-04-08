@@ -34,6 +34,7 @@ module.exports = withBundleAnalyzer({
   },
   transpilePackages: ['lucide-react'],
   experimental: {
+    forceSwcTransforms: process.env.TEST === 'true' ? false : true,
     optimizePackageImports: ['@sk-web-gui'],
   },
   async rewrites() {
