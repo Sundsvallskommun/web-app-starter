@@ -42,7 +42,7 @@ export const useLocalStorage = create(
     }),
     {
       name: `${process.env.NEXT_PUBLIC_APP_NAME}-admin-store`,
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => sessionStorage),
     }
   )
 );
