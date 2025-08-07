@@ -6,7 +6,6 @@ import {
   NODE_ENV,
   ORIGIN,
   PORT,
-  SAML_AUDIENCE,
   SAML_CALLBACK_URL,
   SAML_ENTRY_SSO,
   SAML_FAILURE_REDIRECT,
@@ -21,7 +20,7 @@ import {
   SWAGGER_ENABLED,
 } from '@config';
 import errorMiddleware from '@middlewares/error.middleware';
-import { SAML, Strategy, VerifiedCallback } from '@node-saml/passport-saml';
+import { Strategy, VerifiedCallback } from '@node-saml/passport-saml';
 import { logger, stream } from '@utils/logger';
 import bodyParser from 'body-parser';
 import { defaultMetadataStorage } from 'class-transformer/cjs/storage';
@@ -47,8 +46,8 @@ import { HttpException } from './exceptions/HttpException';
 import { Profile } from './interfaces/profile.interface';
 import { User } from './interfaces/users.interface';
 import { additionalConverters } from './utils/custom-validation-classes';
-import { isValidUrl } from './utils/util';
 import { isValidOrigin } from './utils/isValidOrigin';
+import { isValidUrl } from './utils/util';
 
 const corsWhitelist = ORIGIN.split(',');
 
