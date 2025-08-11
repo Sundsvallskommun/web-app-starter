@@ -20,6 +20,7 @@
     "type-check": "tsc --pretty --noEmit"
   },
   "dependencies": {
+    "@node-saml/passport-saml": "^5.1.0",
     "@prisma/client": "^5.12.1",
     "axios": "^1.7.9",
     "body-parser": "^1.20.3",
@@ -39,7 +40,6 @@
     "memorystore": "^1.6.7",
     "morgan": "^1.10.0",
     "passport": "^0.7.0",
-    "@node-saml/passport-saml": "^5.0.0",
     "qs": "^6.13.1",
     "reflect-metadata": "^0.2.2",
     "routing-controllers": "^0.10.4",
@@ -79,8 +79,8 @@
     "prettier": "^3.4.2",
     "prisma": "^5.12.1",
     "supertest": "^7.0.0",
-    "ts-jest": "^29.2.5",
     "swagger-typescript-api": "^13.0.23",
+    "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
     "tsc-alias": "^1.8.10",
     "tsconfig-paths": "^4.2.0",
