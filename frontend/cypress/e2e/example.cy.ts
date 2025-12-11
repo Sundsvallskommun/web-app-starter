@@ -11,6 +11,5 @@ describe('Example page', () => {
     cy.get('main').should('be.visible');
     cy.get('h1').should('be.visible').should('contain.text', 'Välkommen Förnamn Efternamn!');
     takeElementSnapshot('example-text');
-    // cy.matchImageSnapshot();
   });
 });

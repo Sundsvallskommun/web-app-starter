@@ -10,7 +10,6 @@ localStorage.clear();
 
 beforeEach(() => {
   cy.setCookie(CookieConsentUtils.defaultCookieConsentName, DEFAULT_COOKIE_VALUE);
-  // cy.viewport(1440, 1024);
   cy.intercept('GET', '**/api/me', getMe).as('getMe');
 });
 

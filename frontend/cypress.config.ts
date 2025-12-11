@@ -16,8 +16,6 @@ export default defineConfig({
     },
     video: false,
     viewportWidth: 1280,
-    // Which one works?
-    // viewportHeight: 633,
     viewportHeight: 1024,
     screenshotOnRunFailure: false,
     chromeWebSecurity: false,
