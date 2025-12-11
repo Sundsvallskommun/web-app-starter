@@ -16,7 +16,7 @@ const Exempelsida: React.FC = () => {
   return (
     <DefaultLayout>
       <Main>
-        <div className="text-content">
+        <div data-cy="example-text" className="text-content">
           <h1>{`${capitalize(t('example:welcome'))}${user.name ? ` ${user.name}` : ''}!`}</h1>
           <p>{t('example:description')}</p>
           {user.name ?

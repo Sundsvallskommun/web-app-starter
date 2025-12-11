@@ -1,9 +1,10 @@
 import { defineConfig } from 'cypress';
 import codeCoverageTask from '@cypress/code-coverage/task';
+import { addMatchImageSnapshotPlugin } from '@simonsmith/cypress-image-snapshot/plugin';
 
 export default defineConfig({
   e2e: {
-    // supportFile: false,
+    supportFile: 'cypress/support/e2e.ts',
     baseUrl: `http://localhost:${process.env.PORT || '3000'}${process.env.NEXT_PUBLIC_BASEPATH || ''}`,
     env: {
       apiUrl: `${process.env.NEXT_PUBLIC_API_URL}`,
@@ -14,10 +15,15 @@ export default defineConfig({
       mockPhoneNumber: '0701740635',
     },
     video: false,
+    viewportWidth: 1280,
+    // Which one works?
+    // viewportHeight: 633,
+    viewportHeight: 1024,
     screenshotOnRunFailure: false,
     chromeWebSecurity: false,
     defaultCommandTimeout: 10000,
     setupNodeEvents(on, config) {
+      addMatchImageSnapshotPlugin(on);
       codeCoverageTask(on, config);
       // It's IMPORTANT to return the config object
       // with any changed environment variables
