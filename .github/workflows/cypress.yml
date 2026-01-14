@@ -33,13 +33,14 @@ jobs:
           start: yarn start
           wait-on: "http://localhost:3000"
           spec: cypress/e2e/**/*.cy.ts
+          config: viewportHeight=1024,viewportWidth=1440
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NEXT_PUBLIC_APP_NAME: Web app starter
           NEXT_PUBLIC_API_URL: http://localhost:3001/api
           DOMAIN_NAME: localhost
           BASE_PATH: ""
-          ADMIN_URL: http://localhost:3000/henrik
+          ADMIN_URL: http://localhost:3000/admin
           NEXT_PUBLIC_BASE_PATH: ""
           NEXT_PUBLIC_PROTECTED_ROUTES: '"admin"'
           HEALTH_AUTH: false

@@ -1,4 +1,5 @@
 import '@cypress/code-coverage/support';
+import { addMatchImageSnapshotCommand } from '@simonsmith/cypress-image-snapshot/command';
 
 import { CookieConsentUtils } from '@sk-web-gui/react';
 import { getMe } from '../fixtures/getMe';
@@ -9,6 +10,12 @@ localStorage.clear();
 
 beforeEach(() => {
   cy.setCookie(CookieConsentUtils.defaultCookieConsentName, DEFAULT_COOKIE_VALUE);
-  cy.viewport('macbook-16');
   cy.intercept('GET', '**/api/me', getMe).as('getMe');
+});
+
+addMatchImageSnapshotCommand({
+  failureThreshold: 0.05,
+  failureThresholdType: 'percent',
+  capture: 'viewport',
+  comparisonMethod: 'ssim',
 });
