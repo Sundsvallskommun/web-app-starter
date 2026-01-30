@@ -2,11 +2,8 @@
 
 ## APIer som används
 
-Dessa APIer används i projektet, applikationsanvändaren i WSO2 måste prenumerera på dessa. Systemet utgår ifrån /backend/api-config.ts där dessa står specificerade.
-
-| API             | Version |
-| --------------- | ------: |
-| SimulatorServer |     2.0 |
+Dessa APIer används i projektet, applikationsanvändaren i WSO2 måste prenumerera på dessa.
+Systemet utgår ifrån [api-config.ts](./backend/src/config/api-config.ts)/backend/api-config.ts där dessa står specificerade.
 
 ## Utveckling
 
@@ -72,7 +69,6 @@ yarn prisma:migrate
 6. Synca datamodeller för api:er
 
    Se till att README och /backend/src/config/api-config.ts matchar och justera utefter de api:er som önskas användas.
-
    - För backend, i /backend kör `yarn generate:contracts` för att få ned de senaste datamodellerna för samtliga api:er
      -- Justera om så behövs utifrån de uppdaterade modellerna
 
