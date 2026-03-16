@@ -4,6 +4,7 @@ import { CookieConsent, Footer, Header, Link } from '@sk-web-gui/react';
 import NextLink from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
+ 
 
 interface DefaultLayoutProps {
   children: React.ReactNode;
@@ -53,7 +54,6 @@ export default function DefaultLayout({
         subtitle={headerSubtitle ? headerSubtitle : ''}
         aria-label={`${headerTitle ? headerTitle : process.env.NEXT_PUBLIC_APP_NAME} ${headerSubtitle}`}
         logoLinkOnClick={handleLogoClick}
-        LogoLinkWrapperComponent={<NextLink legacyBehavior href={logoLinkHref} passHref />}
       />
 
       {preContent && preContent}

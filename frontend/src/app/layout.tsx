@@ -1,21 +1,15 @@
 import '@styles/tailwind.scss';
-import { ReactNode } from 'react';
+import React, { ReactNode, Suspense } from 'react';
 import AppLayout from '@layouts/app/app-layout.component';
 import i18nConfig from './i18nConfig';
 
-interface RootLayoutProps {
-  children: ReactNode;
-  params: Promise<{ locale: string }>;
-}
-
-export const generateStaticParams = () => i18nConfig.locales.map((locale) => ({ locale }));
-
-const RootLayout = async ({ children, params }: RootLayoutProps) => {
-  const { locale } = await params;
+const RootLayout = ({ children }: { children: ReactNode }) => {
   return (
-    <html lang={locale}>
+    <html lang={i18nConfig.defaultLocale}>
       <body>
-        <AppLayout>{children}</AppLayout>
+        <Suspense>
+          <AppLayout>{children}</AppLayout>
+        </Suspense>
       </body>
     </html>
   );

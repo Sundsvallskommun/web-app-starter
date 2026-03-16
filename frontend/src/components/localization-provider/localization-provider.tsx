@@ -1,6 +1,7 @@
 'use client';
 
 import { memo, ReactNode } from 'react';
+ 
 import { createInstance, Resource } from 'i18next';
 import { I18nextProvider } from 'react-i18next';
 import initLocalization from '@app/i18n';
