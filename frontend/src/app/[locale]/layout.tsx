@@ -12,7 +12,7 @@ interface LocaleLayoutProps {
 const namespaces = ['common', 'paths', 'layout', 'login', 'example'];
 
 const LocaleLayout = async ({ children, params }: LocaleLayoutProps) => {
-  const { locale } = await params;
+  const { locale } = params;
   const { resources } = await initLocalization(locale, namespaces);
 
   return <LocalizationProvider {...{ locale, resources, namespaces }}>{children}</LocalizationProvider>;
