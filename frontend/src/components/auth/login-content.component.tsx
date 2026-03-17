@@ -1,4 +1,4 @@
-"use client"
+'use client';
 
 import { useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
@@ -20,10 +20,11 @@ const LoginContent: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const { t } = useTranslation();
+
   const isLoggedOut = searchParams.get('loggedout') === '';
   const failMessage = searchParams.get('failMessage');
-  const initalFocus = useRef<HTMLButtonElement>(null);
 
+  const initalFocus = useRef<HTMLButtonElement>(null);
   const setInitalFocus = () => {
     setTimeout(() => {
       initalFocus?.current?.focus();
@@ -32,9 +33,10 @@ const LoginContent: React.FC = () => {
 
   const onLogin = () => {
     const searchPath = searchParams.get('path');
-    const nonLoginPath = !pathName?.match(/\/login/) && pathName;
-    const nonLoginSearch = !searchPath?.match(/\/login|\/logout/) && searchPath;
+    const nonLoginPath = !pathName?.match(/\/login/) && pathName; // Contains path as long as it's not /login
+    const nonLoginSearch = !searchPath?.match(/\/login|\/logout/) && searchPath; // Contains redirect path as long as it's not /login or /logout
     const path = nonLoginPath || nonLoginSearch || '/';
+
     const url = new URL(apiURL('/saml/login'));
     const queries = new URLSearchParams({
       successRedirect: `${appURL(path as string)}`,
@@ -51,13 +53,18 @@ const LoginContent: React.FC = () => {
 
     if (isLoggedOut) {
       router.push('/login');
-    } else if (failMessage === 'NOT_AUTHORIZED' && autoLogin) {
-      onLogin();
-    } else if (failMessage) {
-      setErrorMessage(t(`login:errors.${failMessage}`));
+      setIsLoading(false);
+    } else {
+      if (failMessage === 'NOT_AUTHORIZED' && autoLogin) {
+        // autologin
+        onLogin();
+      } else if (failMessage) {
+        setErrorMessage(t(`login:errors.${failMessage}`));
+        setIsLoading(false);
+      } else {
+        setIsLoading(false);
+      }
     }
-
-    setIsLoading(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -79,9 +86,11 @@ const LoginContent: React.FC = () => {
               <h1 className="mb-10 text-xl">{process.env.NEXT_PUBLIC_APP_NAME}</h1>
               <p className="my-0">{t('login:description')}</p>
             </div>
+
             <Button inverted onClick={() => onLogin()} ref={initalFocus} data-cy="loginButton">
               {capitalize(t('common:login'))}
             </Button>
+
             {errorMessage && <FormErrorMessage className="mt-lg">{errorMessage}</FormErrorMessage>}
           </div>
         </div>
