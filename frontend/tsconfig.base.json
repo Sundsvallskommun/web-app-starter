@@ -1,7 +1,6 @@
 {
   "compilerOptions": {
-    "composite": true,
-    "target": "es6",
+    "target": "es2022",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
@@ -27,6 +26,7 @@
       "@components/*": ["src/components/*"],
       "@interfaces/*": ["src/interfaces/*"],
       "@contexts/*": ["src/contexts/*"],
+      "@hooks/*": ["src/hooks/*"],
       "@layouts/*": ["src/layouts/*"],
       "@styles/*": ["src/styles/*"],
       "@utils/*": ["src/utils/*"],
