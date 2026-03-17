@@ -6,7 +6,7 @@ import initLocalization from '../i18n';
 
 interface LocaleLayoutProps {
   children: ReactNode;
-  params: { locale: string };
+  params: Promise<{ locale:string }>
 }
 
 const namespaces = ['common', 'paths', 'layout', 'login', 'example'];
