@@ -19,7 +19,7 @@ const LocaleLayout = async ({ children, params }: LocaleLayoutProps) => {
 };
 
 export const generateMetadata = async ({ params }: LocaleLayoutProps) => {
-  const { locale } = await params;
+  const { locale } = params;
   const { t } = await initLocalization(locale, namespaces);
   const path = (await headers()).get('x-path');
 
