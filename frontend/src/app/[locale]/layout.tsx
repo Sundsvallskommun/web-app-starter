@@ -12,14 +12,15 @@ interface LocaleLayoutProps {
 const namespaces = ['common', 'paths', 'layout', 'login', 'example'];
 
 const LocaleLayout = async ({ children, params }: LocaleLayoutProps) => {
-  const { locale } = params;
+
+  const { locale } = await params;
   const { resources } = await initLocalization(locale, namespaces);
 
   return <LocalizationProvider {...{ locale, resources, namespaces }}>{children}</LocalizationProvider>;
 };
 
 export const generateMetadata = async ({ params }: LocaleLayoutProps) => {
-  const { locale } = params;
+  const { locale } = await params;
   const { t } = await initLocalization(locale, namespaces);
   const path = (await headers()).get('x-path');
 

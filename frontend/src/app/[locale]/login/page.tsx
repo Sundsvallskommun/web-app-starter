@@ -1,5 +1,5 @@
+import LoginContent from "@components/auth/login-content.component";
 
-import LoginContent from '@components/auth/login-content.component';
 
 const Login: React.FC = () => {
  

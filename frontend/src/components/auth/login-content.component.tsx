@@ -55,15 +55,15 @@ const LoginContent: React.FC = () => {
       router.push('/login');
       setIsLoading(false);
     } else {
-      if (failMessage === 'NOT_AUTHORIZED' && autoLogin) {
-        // autologin
+      if (isLoggedOut) {
+        router.push('/login');
+      } else if (failMessage === 'NOT_AUTHORIZED' && autoLogin) {
         onLogin();
       } else if (failMessage) {
         setErrorMessage(t(`login:errors.${failMessage}`));
-        setIsLoading(false);
-      } else {
-        setIsLoading(false);
       }
+
+      setIsLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

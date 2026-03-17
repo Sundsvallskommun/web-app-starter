@@ -1,12 +1,12 @@
 'use client';
- 
+
 import { useUserStore } from '@services/user-service/user-service';
 import { appURL } from '@utils/app-url';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
-const LogoutContent: React.FC = () => {
+export const LogoutContent: React.FC = () => {
   const router = useRouter();
 
   const resetUser = useUserStore(useShallow((s) => s.reset));
@@ -25,5 +25,3 @@ const LogoutContent: React.FC = () => {
 
   return <></>;
 };
-
-export default LogoutContent;
