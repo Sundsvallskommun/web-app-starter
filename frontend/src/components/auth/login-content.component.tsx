@@ -9,6 +9,7 @@ import { appURL } from '@utils/app-url';
 import { useTranslation } from 'react-i18next';
 import { apiURL } from '@utils/api-url';
 import { capitalize } from 'lodash';
+import { PATH } from '@utils/constants';
 
 const autoLogin = false;
 
@@ -29,7 +30,7 @@ const LoginContent: React.FC = () => {
   const getRedirectPath = () => {
     const searchPath = searchParams.get('path');
 
-    if (pathName && !pathName.includes('/login')) return pathName;
+    if (pathName && !pathName.includes(PATH.api.login)) return pathName;
     if (searchPath && !/\/login|\/logout/.test(searchPath)) return searchPath;
 
     return '/';
@@ -38,10 +39,10 @@ const LoginContent: React.FC = () => {
   const onLogin = useCallback(() => {
     const path = getRedirectPath();
 
-    const url = new URL(apiURL('/saml/login'));
+    const url = new URL(apiURL(PATH.api.samlLogin));
     url.search = new URLSearchParams({
       successRedirect: appURL(path),
-      failureRedirect: `${appURL()}/login`,
+      failureRedirect: `${appURL()}${PATH.api.login}`,
     }).toString();
 
     router.push(url.toString());

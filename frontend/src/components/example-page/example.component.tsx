@@ -12,9 +12,10 @@ const Example: React.FC = () => {
   const user = useUserStore(useShallow((s) => s.user));
   const { t } = useTranslation();
   console.log('user', user);
+  const userString = user.name ? ` ${user.name}` : '';
   return (
         <div data-cy="example-text" className="text-content">
-          <h1>{`${capitalize(t('example:welcome'))}${user.name ? ` ${user.name}` : ''}!`}</h1>
+          <h1>{`${capitalize(t('example:welcome'))}${userString}!`}</h1>
           <p>{t('example:description')}</p>
           {user.name ?
             <NextLink href={`/logout`}>
