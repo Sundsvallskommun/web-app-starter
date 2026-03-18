@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import DefaultLayout from '../default-layout/default-layout.component';
 import Main from '../main/main.component';
-import React from 'react';
+ 
 import { Icon } from '@sk-web-gui/react';
 import { ArrowLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';

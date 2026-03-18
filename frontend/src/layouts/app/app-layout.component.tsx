@@ -1,15 +1,15 @@
 'use client';
 
-import { ReactNode, useEffect, useState } from 'react';
-import 'dayjs/locale/sv';
-import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
-import updateLocale from 'dayjs/plugin/updateLocale';
+import { useUserStore } from '@services/user-service/user-service';
 import { GuiProvider } from '@sk-web-gui/react';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
+import dayjs from 'dayjs';
+import 'dayjs/locale/sv';
+import updateLocale from 'dayjs/plugin/updateLocale';
+import utc from 'dayjs/plugin/utc';
+import { ReactNode, useEffect } from 'react';
+ 
 import { useShallow } from 'zustand/react/shallow';
-import { useUserStore } from '@services/user-service/user-service';
-import LoaderFullScreen from '@components/loader/loader-fullscreen';
 
 dayjs.extend(utc);
 dayjs.locale('sv');
@@ -39,18 +39,17 @@ interface ClientApplicationProps {
 const AppLayout = ({ children }: ClientApplicationProps) => {
   const colorScheme = useLocalStorage(useShallow((state) => state.colorScheme));
   const getMe = useUserStore((state) => state.getMe);
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     getMe();
-    setMounted(true);
-  }, [getMe, setMounted]);
+  }, [getMe]);
 
-  if (!mounted) {
-    return <LoaderFullScreen />;
-  }
-
-  return <GuiProvider colorScheme={colorScheme}>{children}</GuiProvider>;
+  return (
+    <GuiProvider colorScheme={colorScheme}>
+      {children}
+      {/* <InactivityMonitor /> */}
+    </GuiProvider>
+  );
 };
 
 export default AppLayout;

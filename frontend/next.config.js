@@ -18,26 +18,17 @@ envalid.cleanEnv(process.env, {
   HEALTH_PASSWORD: authDependent(),
 });
 
-const withBundleAnalyzer = require('@next/bundle-analyzer')({
-  enabled: process.env.ANALYZE === 'true',
-});
-
-module.exports = withBundleAnalyzer({
+module.exports = {
   output: 'standalone',
   images: {
-    domains: [process.env.DOMAIN_NAME],
+    remotePatterns: process.env.DOMAIN_NAME ? [{ protocol: 'https', hostname: process.env.DOMAIN_NAME }] : [],
     formats: ['image/avif', 'image/webp'],
   },
-  basePath: process.env.BASE_PATH,
-  sassOptions: {
-    prependData: `$basePath: '${process.env.BASE_PATH}';`,
-  },
-  transpilePackages: ['lucide-react'],
+  basePath: process.env.NEXT_PUBLIC_BASE_PATH || '',
   experimental: {
-    forceSwcTransforms: process.env.TEST === 'true' ? false : true,
-    optimizePackageImports: ['@sk-web-gui'],
+    optimizePackageImports: ['@sk-web-gui/core', '@sk-web-gui/react', 'lodash', 'dayjs'],
   },
   async rewrites() {
     return [{ source: '/napi/:path*', destination: '/api/:path*' }];
   },
-});
+};
