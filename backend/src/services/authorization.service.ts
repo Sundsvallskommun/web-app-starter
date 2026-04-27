@@ -44,14 +44,16 @@ export const getPermissions = (groups: InternalRole[] | ADRole[], internalGroups
   const permissions: Permissions = defaultPermissions();
   groups.forEach(group => {
     const groupLower = group.toLowerCase();
-    const role = internalGroups ? (groupLower as InternalRole) : (roleADMapping[groupLower] as InternalRole);
+    const role = internalGroups ? (groupLower as InternalRole) : (roleADMapping[groupLower as ADRole] as InternalRole);
     if (roles.has(role)) {
       const groupPermissions = roles.get(role);
-      Object.keys(groupPermissions).forEach(permission => {
-        if (groupPermissions[permission] === true) {
-          permissions[permission] = true;
-        }
-      });
+      if (groupPermissions) {
+        Object.keys(groupPermissions).forEach(permission => {
+          if (groupPermissions[permission as keyof Permissions] === true) {
+            permissions[permission as keyof Permissions] = true;
+          }
+        });
+      }
     }
   });
   return permissions;
@@ -68,7 +70,7 @@ export const getRole = (groups: ADRole[]) => {
   const roles: InternalRole[] = [];
   groups.forEach(group => {
     const groupLower = group.toLowerCase();
-    const role = roleADMapping[groupLower];
+    const role = roleADMapping[groupLower as ADRole];
     if (role) {
       roles.push(role);
     }
