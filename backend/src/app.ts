@@ -23,6 +23,7 @@ import errorMiddleware from '@middlewares/error.middleware';
 import { Strategy, VerifiedCallback } from '@node-saml/passport-saml';
 import { logger, stream } from '@utils/logger';
 import bodyParser from 'body-parser';
+// @ts-ignore - class-transformer/cjs/storage doesn't have proper types
 import { defaultMetadataStorage } from 'class-transformer/cjs/storage';
 import { validationMetadatasToSchemas } from 'class-validator-jsonschema';
 import compression from 'compression';
@@ -49,39 +50,36 @@ import { additionalConverters } from './utils/custom-validation-classes';
 import { isValidOrigin } from './utils/isValidOrigin';
 import { isValidUrl } from './utils/util';
 
-const corsWhitelist = ORIGIN.split(',');
+const corsWhitelist = ORIGIN?.split(',');
 
 const SessionStoreCreate = SESSION_MEMORY ? createMemoryStore(session) : createFileStore(session);
 const sessionTTL = 4 * 24 * 60 * 60;
 // NOTE: memory uses ms while file uses seconds
 const sessionStore = new SessionStoreCreate(SESSION_MEMORY ? { checkPeriod: sessionTTL * 1000 } : { sessionTTL, path: './data/sessions' });
 
-// const prisma = new PrismaClient();
-// const apiService = new ApiService();
-
 passport.serializeUser(function (user, done) {
   done(null, user);
 });
 passport.deserializeUser(function (user, done) {
-  done(null, user);
+  done(null, user as User);
 });
 
 const samlStrategy = new Strategy(
   {
     disableRequestedAuthnContext: true,
     identifierFormat: 'urn:oasis:names:tc:SAML:2.0:nameid-format:transient',
-    callbackUrl: SAML_CALLBACK_URL,
-    entryPoint: SAML_ENTRY_SSO,
+    callbackUrl: SAML_CALLBACK_URL || '',
+    entryPoint: SAML_ENTRY_SSO || '',
     // decryptionPvk: SAML_PRIVATE_KEY,
-    privateKey: SAML_PRIVATE_KEY,
+    privateKey: SAML_PRIVATE_KEY || '',
     // Identity Provider's public key
-    idpCert: SAML_IDP_PUBLIC_CERT,
-    issuer: SAML_ISSUER,
+    idpCert: SAML_IDP_PUBLIC_CERT || '',
+    issuer: SAML_ISSUER || '',
     wantAssertionsSigned: false,
     wantAuthnResponseSigned: false,
     acceptedClockSkewMs: 1000,
     audience: false,
-    logoutCallbackUrl: SAML_LOGOUT_CALLBACK_URL,
+    logoutCallbackUrl: SAML_LOGOUT_CALLBACK_URL || '',
   },
   async function (profile: Profile, done: VerifiedCallback) {
     if (!profile) {
@@ -133,13 +131,14 @@ const samlStrategy = new Strategy(
     } catch (err) {
       if (err instanceof HttpException && err?.status === 404) {
         // Handle missing person form Citizen
+        done(err);
       }
-      done(err);
+      done({ message: 'UNKOWN_ERROR', name: 'UNKOWN_ERROR' });
     }
-  },
+  } as any,
   async function (profile: Profile, done: VerifiedCallback) {
     return done(null, {});
-  },
+  } as any,
 );
 
 class App {
@@ -188,7 +187,7 @@ class App {
 
     this.app.use(
       session({
-        secret: SECRET_KEY,
+        secret: SECRET_KEY ?? '',
         resave: false,
         saveUninitialized: false,
         store: sessionStore,
@@ -203,7 +202,7 @@ class App {
       cors({
         credentials: CREDENTIALS,
         origin: function (origin, callback) {
-          if (origin === undefined || corsWhitelist.indexOf(origin) !== -1 || corsWhitelist.indexOf('*') !== -1) {
+          if (origin === undefined || corsWhitelist?.indexOf(origin) !== -1 || corsWhitelist.indexOf('*') !== -1) {
             callback(null, true);
           } else {
             if (NODE_ENV == 'development') {
@@ -238,7 +237,7 @@ class App {
 
     this.app.get(`${BASE_URL_PREFIX}/saml/metadata`, (req, res) => {
       res.type('application/xml');
-      const metadata = samlStrategy.generateServiceProviderMetadata(SAML_PUBLIC_KEY, SAML_PUBLIC_KEY);
+      const metadata = samlStrategy.generateServiceProviderMetadata(SAML_PUBLIC_KEY ?? '', SAML_PUBLIC_KEY);
       res.status(200).send(metadata);
     });
 
@@ -263,7 +262,7 @@ class App {
             if (err) {
               return next(err);
             }
-            res.redirect(successRedirect);
+            res.redirect(successRedirect ?? '/');
           });
         });
       },
@@ -321,7 +320,7 @@ class App {
         failureRedirect = successRedirect;
       }
 
-      passport.authenticate('saml', (err, user) => {
+      passport.authenticate('saml', (err: Error, user: Express.User) => {
         if (err) {
           const queries = new URLSearchParams(failureRedirect.searchParams);
           if (err?.name) {
@@ -374,7 +373,7 @@ class App {
     const storage = getMetadataArgsStorage();
     const spec = routingControllersToSpec(storage, routingControllersOptions, {
       components: {
-        schemas: schemas as { [schema: string]: unknown },
+        schemas: schemas,
         securitySchemes: {
           basicAuth: {
             scheme: 'basic',
