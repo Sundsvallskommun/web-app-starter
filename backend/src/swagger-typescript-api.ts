@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import { promisify } from 'node:util';
 
 import { APIS, API_BASE_URL } from './config/index';
+import { generateContractClassesForDirectory } from './utils/generate-contract-classes';
 
 const PATH_TO_OUTPUT_DIR = path.resolve(process.cwd(), './src/data-contracts');
 const PATH_TO_TEMP_DIR = path.join(PATH_TO_OUTPUT_DIR, '.tmp');
@@ -49,6 +50,11 @@ const main = async () => {
     await runCommand(
       `npx swagger-typescript-api generate --modular -p "${tempSwaggerPath}" -o "${outputPath}" --no-client --clean-output --extract-enums`,
     );
+
+    const generatedClassFiles = generateContractClassesForDirectory(outputPath);
+    if (generatedClassFiles.length > 0) {
+      console.log(`Generated contract classes: ${generatedClassFiles.length}`);
+    }
 
     fs.rmSync(tempSwaggerPath, { force: true });
   }

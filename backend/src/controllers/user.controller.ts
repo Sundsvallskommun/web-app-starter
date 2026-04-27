@@ -2,6 +2,7 @@ import { HttpException } from '@/exceptions/HttpException';
 import { RequestWithUser } from '@/interfaces/auth.interface';
 import { ClientUser } from '@/interfaces/users.interface';
 import { UserApiResponse } from '@/responses/user.response';
+import { assertResponseContract } from '@/utils/assert-response-contract';
 import authMiddleware from '@middlewares/auth.middleware';
 import { Response } from 'express';
 import { Controller, Get, Req, Res, UseBefore } from 'routing-controllers';
@@ -26,6 +27,10 @@ export class UserController {
       name: name,
       username: username,
     };
-    return response.send({ data: userData, message: 'success' });
+
+    const payload: UserApiResponse = { data: userData, message: 'success' };
+    assertResponseContract(UserApiResponse, payload);
+
+    return response.send(payload);
   }
 }
