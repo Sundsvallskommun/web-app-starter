@@ -28,6 +28,13 @@ interface RenderPropertyContext {
   importSets: ImportSets;
 }
 
+interface InterfaceDependencyNode {
+  name: string;
+  declaration: ts.InterfaceDeclaration;
+  dependencies: Set<string>;
+  sourceIndex: number;
+}
+
 const GENERATED_HEADER = `/* eslint-disable */
 /* tslint:disable */
 /*
@@ -222,6 +229,81 @@ const collectEnumTypeReferences = (typeNode: ts.TypeNode, enumNames: Set<string>
   return collected;
 };
 
+const collectInterfaceTypeReferences = (
+  typeNode: ts.TypeNode,
+  interfaceNames: Set<string>,
+  collected = new Set<string>(),
+): Set<string> => {
+  const visit = (node: ts.Node) => {
+    if (ts.isTypeReferenceNode(node) && ts.isIdentifier(node.typeName) && interfaceNames.has(node.typeName.text)) {
+      collected.add(node.typeName.text);
+    }
+    ts.forEachChild(node, visit);
+  };
+
+  visit(typeNode);
+  return collected;
+};
+
+const orderInterfaceDeclarations = (
+  interfaceDeclarations: ts.InterfaceDeclaration[],
+  interfaceNames: Set<string>,
+): ts.InterfaceDeclaration[] => {
+  const dependencyNodes: InterfaceDependencyNode[] = interfaceDeclarations.map((declaration, sourceIndex) => ({
+    name: declaration.name.text,
+    declaration,
+    dependencies: new Set<string>(),
+    sourceIndex,
+  }));
+
+  const nodesByName = new Map<string, InterfaceDependencyNode>(dependencyNodes.map(node => [node.name, node]));
+
+  for (const node of dependencyNodes) {
+    for (const member of node.declaration.members) {
+      if (!ts.isPropertySignature(member) || !member.type) {
+        continue;
+      }
+
+      collectInterfaceTypeReferences(member.type, interfaceNames).forEach(interfaceName => {
+        if (interfaceName !== node.name) {
+          node.dependencies.add(interfaceName);
+        }
+      });
+    }
+  }
+
+  const sortBySourceIndex = (a: string, b: string) => (nodesByName.get(a)?.sourceIndex ?? 0) - (nodesByName.get(b)?.sourceIndex ?? 0);
+  const visiting = new Set<string>();
+  const visited = new Set<string>();
+  const orderedNames: string[] = [];
+
+  const visit = (name: string): void => {
+    if (visited.has(name) || visiting.has(name)) {
+      return;
+    }
+
+    const node = nodesByName.get(name);
+    if (!node) {
+      return;
+    }
+
+    visiting.add(name);
+    for (const dependencyName of Array.from(node.dependencies).sort(sortBySourceIndex)) {
+      visit(dependencyName);
+    }
+    visiting.delete(name);
+
+    visited.add(name);
+    orderedNames.push(name);
+  };
+
+  for (const node of dependencyNodes) {
+    visit(node.name);
+  }
+
+  return orderedNames.map(name => nodesByName.get(name)?.declaration).filter((declaration): declaration is ts.InterfaceDeclaration => Boolean(declaration));
+};
+
 const getPropertyKey = (name: ts.PropertyName): string | null => {
   if (ts.isIdentifier(name)) {
     return name.text;
@@ -342,6 +424,7 @@ export const renderContractClassesSource = (sourceText: string, importPath = './
 
   const enumNames = new Set<string>(sourceFile.statements.filter(ts.isEnumDeclaration).map(enumDeclaration => enumDeclaration.name.text));
   const interfaceNames = new Set<string>(interfaceDeclarations.map(interfaceDeclaration => interfaceDeclaration.name.text));
+  const orderedInterfaceDeclarations = orderInterfaceDeclarations(interfaceDeclarations, interfaceNames);
 
   const importSets: ImportSets = {
     classValidatorImports: new Set<string>(),
@@ -357,7 +440,7 @@ export const renderContractClassesSource = (sourceText: string, importPath = './
 
   const classBlocks: string[] = [];
 
-  for (const interfaceDeclaration of interfaceDeclarations) {
+  for (const interfaceDeclaration of orderedInterfaceDeclarations) {
     const classLines: string[] = [`export class ${interfaceDeclaration.name.text} {`];
 
     for (const member of interfaceDeclaration.members) {

@@ -64,4 +64,35 @@ describe('generate-contract-classes', () => {
     expect(rendered).toContain('@IsString()');
     expect(rendered).not.toContain('@Allow()');
   });
+
+  it('renders nested classes in dependency order even when interfaces are declared out of order', () => {
+    const source = `
+      export interface User {
+        profile: Profile;
+      }
+
+      export interface Profile {
+        address: Address;
+      }
+
+      export interface Address {
+        city: string;
+      }
+    `;
+
+    const rendered = renderContractClassesSource(source);
+
+    expect(rendered).not.toBeNull();
+
+    const addressIndex = rendered!.indexOf('export class Address');
+    const profileIndex = rendered!.indexOf('export class Profile');
+    const userIndex = rendered!.indexOf('export class User');
+
+    expect(addressIndex).toBeGreaterThan(-1);
+    expect(profileIndex).toBeGreaterThan(-1);
+    expect(userIndex).toBeGreaterThan(-1);
+
+    expect(addressIndex).toBeLessThan(profileIndex);
+    expect(profileIndex).toBeLessThan(userIndex);
+  });
 });
