@@ -15,6 +15,19 @@ interface TypeAnalysis {
   optionalFromUndefined: boolean;
 }
 
+interface ImportSets {
+  classValidatorImports: Set<string>;
+  classTransformerImports: Set<string>;
+  customImports: Set<string>;
+  enumImports: Set<string>;
+}
+
+interface RenderPropertyContext {
+  interfaceNames: Set<string>;
+  enumNames: Set<string>;
+  importSets: ImportSets;
+}
+
 const GENERATED_HEADER = `/* eslint-disable */
 /* tslint:disable */
 /*
@@ -142,7 +155,8 @@ const analyzeTypeNode = (
   };
 };
 
-const escapeSingleQuotes = (value: string) => value.replace(/'/g, "\\'");
+const escapeSingleQuotes = (value: string) => value.replace(/\\/g, String.raw`\\`).replace(/'/g, String.raw`\'`);
+const sortAlphabetically = (a: string, b: string) => a.localeCompare(b);
 
 const getPropertyKey = (name: ts.PropertyName): string | null => {
   if (ts.isIdentifier(name)) {
@@ -214,8 +228,7 @@ const buildDecorators = (
   if (analysis.kind === 'nested' && analysis.nestedName) {
     classValidatorImports.add('ValidateNested');
     classTransformerImports.add('Type');
-    decorators.push(analysis.isArray ? '@ValidateNested({ each: true })' : '@ValidateNested()');
-    decorators.push(`@Type(() => ${analysis.nestedName})`);
+    decorators.push(analysis.isArray ? '@ValidateNested({ each: true })' : '@ValidateNested()', `@Type(() => ${analysis.nestedName})`);
     return decorators;
   }
 
@@ -227,12 +240,7 @@ const buildDecorators = (
 const renderPropertyLine = (
   member: ts.PropertySignature,
   sourceFile: ts.SourceFile,
-  interfaceNames: Set<string>,
-  enumNames: Set<string>,
-  classValidatorImports: Set<string>,
-  classTransformerImports: Set<string>,
-  customImports: Set<string>,
-  enumImports: Set<string>,
+  context: RenderPropertyContext,
 ) => {
   if (!member.type || !member.name) {
     return null;
@@ -243,9 +251,16 @@ const renderPropertyLine = (
     return null;
   }
 
-  const analysis = analyzeTypeNode(member.type, interfaceNames, enumNames);
+  const analysis = analyzeTypeNode(member.type, context.interfaceNames, context.enumNames);
   const isOptional = Boolean(member.questionToken) || analysis.optionalFromUndefined;
-  const decorators = buildDecorators(analysis, isOptional, classValidatorImports, classTransformerImports, customImports, enumImports);
+  const decorators = buildDecorators(
+    analysis,
+    isOptional,
+    context.importSets.classValidatorImports,
+    context.importSets.classTransformerImports,
+    context.importSets.customImports,
+    context.importSets.enumImports,
+  );
   const typeText = member.type.getText(sourceFile);
   const propertyLine = `${propertyKey}${isOptional ? '?' : '!'}: ${typeText};`;
 
@@ -263,10 +278,17 @@ export const renderContractClassesSource = (sourceText: string, importPath = './
   const enumNames = new Set<string>(sourceFile.statements.filter(ts.isEnumDeclaration).map(enumDeclaration => enumDeclaration.name.text));
   const interfaceNames = new Set<string>(interfaceDeclarations.map(interfaceDeclaration => interfaceDeclaration.name.text));
 
-  const classValidatorImports = new Set<string>();
-  const classTransformerImports = new Set<string>();
-  const customImports = new Set<string>();
-  const enumImports = new Set<string>();
+  const importSets: ImportSets = {
+    classValidatorImports: new Set<string>(),
+    classTransformerImports: new Set<string>(),
+    customImports: new Set<string>(),
+    enumImports: new Set<string>(),
+  };
+  const renderContext: RenderPropertyContext = {
+    interfaceNames,
+    enumNames,
+    importSets,
+  };
 
   const classBlocks: string[] = [];
 
@@ -278,16 +300,7 @@ export const renderContractClassesSource = (sourceText: string, importPath = './
         continue;
       }
 
-      const propertyLines = renderPropertyLine(
-        member,
-        sourceFile,
-        interfaceNames,
-        enumNames,
-        classValidatorImports,
-        classTransformerImports,
-        customImports,
-        enumImports,
-      );
+      const propertyLines = renderPropertyLine(member, sourceFile, renderContext);
 
       if (!propertyLines) {
         continue;
@@ -301,17 +314,17 @@ export const renderContractClassesSource = (sourceText: string, importPath = './
   }
 
   const imports: string[] = [];
-  if (enumImports.size > 0) {
-    imports.push(`import { ${Array.from(enumImports).sort().join(', ')} } from '${importPath}';`);
+  if (importSets.enumImports.size > 0) {
+    imports.push(`import { ${Array.from(importSets.enumImports).sort(sortAlphabetically).join(', ')} } from '${importPath}';`);
   }
-  if (classTransformerImports.size > 0) {
-    imports.push(`import { ${Array.from(classTransformerImports).sort().join(', ')} } from 'class-transformer';`);
+  if (importSets.classTransformerImports.size > 0) {
+    imports.push(`import { ${Array.from(importSets.classTransformerImports).sort(sortAlphabetically).join(', ')} } from 'class-transformer';`);
   }
-  if (classValidatorImports.size > 0) {
-    imports.push(`import { ${Array.from(classValidatorImports).sort().join(', ')} } from 'class-validator';`);
+  if (importSets.classValidatorImports.size > 0) {
+    imports.push(`import { ${Array.from(importSets.classValidatorImports).sort(sortAlphabetically).join(', ')} } from 'class-validator';`);
   }
-  if (customImports.size > 0) {
-    imports.push(`import { ${Array.from(customImports).sort().join(', ')} } from '@/utils/custom-validation-classes';`);
+  if (importSets.customImports.size > 0) {
+    imports.push(`import { ${Array.from(importSets.customImports).sort(sortAlphabetically).join(', ')} } from '@/utils/custom-validation-classes';`);
   }
 
   return `${GENERATED_HEADER}\n${imports.join('\n')}\n\n${classBlocks.join('\n\n')}\n`;

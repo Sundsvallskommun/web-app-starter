@@ -17,10 +17,10 @@ export class Problem {
   type?: string;
   @IsOptional()
   @IsString()
-  title?: string;
+  detail?: string;
   @IsOptional()
   @IsString()
-  detail?: string;
+  title?: string;
   @IsOptional()
   @IsInt()
   status?: number;

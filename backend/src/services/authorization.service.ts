@@ -44,7 +44,7 @@ export const getPermissions = (groups: InternalRole[] | ADRole[], internalGroups
   const permissions: Permissions = defaultPermissions();
   groups.forEach(group => {
     const groupLower = group.toLowerCase();
-    const role = internalGroups ? (groupLower as InternalRole) : (roleADMapping[groupLower as ADRole] as InternalRole);
+    const role = internalGroups ? (groupLower as InternalRole) : roleADMapping[groupLower as ADRole];
     if (roles.has(role)) {
       const groupPermissions = roles.get(role);
       if (groupPermissions) {

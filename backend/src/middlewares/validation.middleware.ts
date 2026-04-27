@@ -12,13 +12,13 @@ const getAllNestedErrors = (error: ValidationError): string | string[] | undefin
 
 export const validationMiddleware = (
   type: any,
-  value: string | 'body' | 'query' | 'params' = 'body',
+  value: 'body' | 'query' | 'params' = 'body',
   skipMissingProperties = false,
   whitelist = true,
   forbidNonWhitelisted = true,
 ): RequestHandler => {
   return (req, res, next) => {
-    const obj = plainToInstance(type, (req as any)[value]);
+    const obj = plainToInstance(type, req[value]);
     validate(obj, { skipMissingProperties, whitelist, forbidNonWhitelisted }).then((errors: ValidationError[]) => {
       if (errors.length > 0) {
         const message = errors.map(getAllNestedErrors).join(', ');
