@@ -44,5 +44,24 @@ describe('generate-contract-classes', () => {
     expect(rendered).toContain('@IsOptional()');
     expect(rendered).not.toContain('@IsArray()');
   });
-});
 
+  it('handles open enums (Enum | string) without falling back to @Allow and imports enum types used in property signatures', () => {
+    const source = `
+      export enum Modules {
+        IntricApplications = "intric-applications",
+      }
+
+      export interface ModuleBase {
+        name: Modules | string;
+      }
+    `;
+
+    const rendered = renderContractClassesSource(source);
+
+    expect(rendered).not.toBeNull();
+    expect(rendered).toContain("import { Modules } from './data-contracts';");
+    expect(rendered).toContain('name!: Modules | string;');
+    expect(rendered).toContain('@IsString()');
+    expect(rendered).not.toContain('@Allow()');
+  });
+});
