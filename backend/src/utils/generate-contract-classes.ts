@@ -95,6 +95,19 @@ const analyzeTypeNode = (
   const { normalizedTypeNode, nullable, optionalFromUndefined } = normalizeTypeNode(typeNode);
 
   const analyzeScalarLikeNode = (node: ts.TypeNode): Omit<TypeAnalysis, 'nullable' | 'optionalFromUndefined' | 'isArray'> => {
+    if (ts.isLiteralTypeNode(node) && ts.isStringLiteral(node.literal)) {
+      return { kind: 'scalar', scalarKind: 'string' };
+    }
+    if (ts.isLiteralTypeNode(node) && ts.isNumericLiteral(node.literal)) {
+      return { kind: 'scalar', scalarKind: 'number' };
+    }
+    if (
+      ts.isLiteralTypeNode(node) &&
+      (node.literal.kind === ts.SyntaxKind.TrueKeyword || node.literal.kind === ts.SyntaxKind.FalseKeyword)
+    ) {
+      return { kind: 'scalar', scalarKind: 'boolean' };
+    }
+
     if (node.kind === ts.SyntaxKind.StringKeyword) {
       return { kind: 'scalar', scalarKind: 'string' };
     }
@@ -120,11 +133,39 @@ const analyzeTypeNode = (
     return { kind: 'unsupported' };
   };
 
+  const analyzeUnionNode = (node: ts.UnionTypeNode): Omit<TypeAnalysis, 'nullable' | 'optionalFromUndefined' | 'isArray'> => {
+    const members = node.types.map(unwrapParenthesizedType).map(analyzeScalarLikeNode);
+    const enumMembers = members.filter(member => member.kind === 'enum');
+    const scalarMembers = members.filter(member => member.kind === 'scalar');
+    const unsupportedMembers = members.filter(member => member.kind === 'unsupported' || member.kind === 'nested');
+
+    // swagger-typescript-api may emit open enums as Enum | string.
+    // We validate this as string (since any string is acceptable) instead of falling back to @Allow().
+    if (enumMembers.length >= 1 && scalarMembers.some(member => member.scalarKind === 'string') && unsupportedMembers.length === 0) {
+      return { kind: 'scalar', scalarKind: 'string' };
+    }
+
+    if (scalarMembers.length >= 1 && unsupportedMembers.length === 0 && enumMembers.length === 0) {
+      if (scalarMembers.some(member => member.scalarKind === 'string')) {
+        return { kind: 'scalar', scalarKind: 'string' };
+      }
+      if (scalarMembers.some(member => member.scalarKind === 'number')) {
+        return { kind: 'scalar', scalarKind: 'number' };
+      }
+      if (scalarMembers.some(member => member.scalarKind === 'boolean')) {
+        return { kind: 'scalar', scalarKind: 'boolean' };
+      }
+    }
+
+    return { kind: 'unsupported' };
+  };
+
   if (ts.isArrayTypeNode(normalizedTypeNode)) {
     const elementNode = unwrapParenthesizedType(normalizedTypeNode.elementType);
     const result = analyzeScalarLikeNode(elementNode);
+    const unionResult = ts.isUnionTypeNode(elementNode) ? analyzeUnionNode(elementNode) : null;
     return {
-      ...result,
+      ...(unionResult ?? result),
       isArray: true,
       nullable,
       optionalFromUndefined,
@@ -138,9 +179,20 @@ const analyzeTypeNode = (
   ) {
     const elementNode = unwrapParenthesizedType(normalizedTypeNode.typeArguments[0]);
     const result = analyzeScalarLikeNode(elementNode);
+    const unionResult = ts.isUnionTypeNode(elementNode) ? analyzeUnionNode(elementNode) : null;
+    return {
+      ...(unionResult ?? result),
+      isArray: true,
+      nullable,
+      optionalFromUndefined,
+    };
+  }
+
+  if (ts.isUnionTypeNode(normalizedTypeNode)) {
+    const result = analyzeUnionNode(normalizedTypeNode);
     return {
       ...result,
-      isArray: true,
+      isArray: false,
       nullable,
       optionalFromUndefined,
     };
@@ -157,6 +209,18 @@ const analyzeTypeNode = (
 
 const escapeSingleQuotes = (value: string) => value.replace(/\\/g, String.raw`\\`).replace(/'/g, String.raw`\'`);
 const sortAlphabetically = (a: string, b: string) => a.localeCompare(b);
+
+const collectEnumTypeReferences = (typeNode: ts.TypeNode, enumNames: Set<string>, collected = new Set<string>()): Set<string> => {
+  const visit = (node: ts.Node) => {
+    if (ts.isTypeReferenceNode(node) && ts.isIdentifier(node.typeName) && enumNames.has(node.typeName.text)) {
+      collected.add(node.typeName.text);
+    }
+    ts.forEachChild(node, visit);
+  };
+
+  visit(typeNode);
+  return collected;
+};
 
 const getPropertyKey = (name: ts.PropertyName): string | null => {
   if (ts.isIdentifier(name)) {
@@ -252,6 +316,7 @@ const renderPropertyLine = (
   }
 
   const analysis = analyzeTypeNode(member.type, context.interfaceNames, context.enumNames);
+  collectEnumTypeReferences(member.type, context.enumNames).forEach(enumName => context.importSets.enumImports.add(enumName));
   const isOptional = Boolean(member.questionToken) || analysis.optionalFromUndefined;
   const decorators = buildDecorators(
     analysis,
