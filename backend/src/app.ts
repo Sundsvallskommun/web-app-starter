@@ -131,9 +131,9 @@ const samlStrategy = new Strategy(
     } catch (err) {
       if (err instanceof HttpException && err?.status === 404) {
         // Handle missing person form Citizen
-        done(err);
+        return done(err);
       }
-      done({ message: 'UNKOWN_ERROR', name: 'UNKOWN_ERROR' });
+      done({ message: 'UNKNOWN_ERROR', name: 'UNKNOWN_ERROR' });
     }
   } as any,
   async function (profile: Profile, done: VerifiedCallback) {
