@@ -1,0 +1,536 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import ts from 'typescript';
+
+type ScalarKind = 'string' | 'number' | 'boolean';
+type AnalysisKind = 'scalar' | 'enum' | 'nested' | 'unsupported';
+
+interface TypeAnalysis {
+  kind: AnalysisKind;
+  scalarKind?: ScalarKind;
+  enumName?: string;
+  nestedName?: string;
+  isArray: boolean;
+  nullable: boolean;
+  optionalFromUndefined: boolean;
+}
+
+interface ImportSets {
+  classValidatorImports: Set<string>;
+  classTransformerImports: Set<string>;
+  customImports: Set<string>;
+  enumImports: Set<string>;
+}
+
+interface RenderPropertyContext {
+  interfaceNames: Set<string>;
+  enumNames: Set<string>;
+  importSets: ImportSets;
+}
+
+interface InterfaceDependencyNode {
+  name: string;
+  declaration: ts.InterfaceDeclaration;
+  dependencies: Set<string>;
+  sourceIndex: number;
+}
+
+const GENERATED_HEADER = `/* eslint-disable */
+/* tslint:disable */
+/*
+ * ---------------------------------------------------------------
+ * ## THIS FILE WAS GENERATED FROM CONTRACT INTERFACES          ##
+ * ---------------------------------------------------------------
+ */
+`;
+
+const isNullTypeNode = (typeNode: ts.TypeNode): boolean => {
+  return typeNode.kind === ts.SyntaxKind.NullKeyword || (ts.isLiteralTypeNode(typeNode) && typeNode.literal.kind === ts.SyntaxKind.NullKeyword);
+};
+
+const isUndefinedTypeNode = (typeNode: ts.TypeNode): boolean => {
+  return typeNode.kind === ts.SyntaxKind.UndefinedKeyword || (ts.isTypeReferenceNode(typeNode) && typeNode.typeName.getText() === 'undefined');
+};
+
+const unwrapParenthesizedType = (typeNode: ts.TypeNode): ts.TypeNode => {
+  if (ts.isParenthesizedTypeNode(typeNode)) {
+    return unwrapParenthesizedType(typeNode.type);
+  }
+  return typeNode;
+};
+
+const normalizeTypeNode = (typeNode: ts.TypeNode) => {
+  let nullable = false;
+  let optionalFromUndefined = false;
+  let normalizedTypeNode = unwrapParenthesizedType(typeNode);
+
+  if (ts.isUnionTypeNode(normalizedTypeNode)) {
+    const filtered = normalizedTypeNode.types.filter(type => {
+      const unwrapped = unwrapParenthesizedType(type);
+      if (isNullTypeNode(unwrapped)) {
+        nullable = true;
+        return false;
+      }
+      if (isUndefinedTypeNode(unwrapped)) {
+        optionalFromUndefined = true;
+        return false;
+      }
+      return true;
+    });
+
+    if (filtered.length === 1) {
+      normalizedTypeNode = unwrapParenthesizedType(filtered[0]);
+    } else if (filtered.length > 1) {
+      normalizedTypeNode = ts.factory.createUnionTypeNode(filtered);
+    } else {
+      normalizedTypeNode = ts.factory.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword);
+    }
+  }
+
+  return {
+    normalizedTypeNode,
+    nullable,
+    optionalFromUndefined,
+  };
+};
+
+const analyzeTypeNode = (
+  typeNode: ts.TypeNode,
+  interfaceNames: Set<string>,
+  enumNames: Set<string>,
+): TypeAnalysis => {
+  const { normalizedTypeNode, nullable, optionalFromUndefined } = normalizeTypeNode(typeNode);
+
+  const analyzeScalarLikeNode = (node: ts.TypeNode): Omit<TypeAnalysis, 'nullable' | 'optionalFromUndefined' | 'isArray'> => {
+    if (ts.isLiteralTypeNode(node) && ts.isStringLiteral(node.literal)) {
+      return { kind: 'scalar', scalarKind: 'string' };
+    }
+    if (ts.isLiteralTypeNode(node) && ts.isNumericLiteral(node.literal)) {
+      return { kind: 'scalar', scalarKind: 'number' };
+    }
+    if (
+      ts.isLiteralTypeNode(node) &&
+      (node.literal.kind === ts.SyntaxKind.TrueKeyword || node.literal.kind === ts.SyntaxKind.FalseKeyword)
+    ) {
+      return { kind: 'scalar', scalarKind: 'boolean' };
+    }
+
+    if (node.kind === ts.SyntaxKind.StringKeyword) {
+      return { kind: 'scalar', scalarKind: 'string' };
+    }
+    if (node.kind === ts.SyntaxKind.NumberKeyword) {
+      return { kind: 'scalar', scalarKind: 'number' };
+    }
+    if (node.kind === ts.SyntaxKind.BooleanKeyword) {
+      return { kind: 'scalar', scalarKind: 'boolean' };
+    }
+
+    if (ts.isTypeReferenceNode(node)) {
+      const typeName = node.typeName.getText();
+
+      if (enumNames.has(typeName)) {
+        return { kind: 'enum', enumName: typeName };
+      }
+
+      if (interfaceNames.has(typeName)) {
+        return { kind: 'nested', nestedName: typeName };
+      }
+    }
+
+    return { kind: 'unsupported' };
+  };
+
+  const analyzeUnionNode = (node: ts.UnionTypeNode): Omit<TypeAnalysis, 'nullable' | 'optionalFromUndefined' | 'isArray'> => {
+    const members = node.types.map(unwrapParenthesizedType).map(analyzeScalarLikeNode);
+    const enumMembers = members.filter(member => member.kind === 'enum');
+    const scalarMembers = members.filter(member => member.kind === 'scalar');
+    const unsupportedMembers = members.filter(member => member.kind === 'unsupported' || member.kind === 'nested');
+
+    // swagger-typescript-api may emit open enums as Enum | string.
+    // We validate this as string (since any string is acceptable) instead of falling back to @Allow().
+    if (enumMembers.length >= 1 && scalarMembers.some(member => member.scalarKind === 'string') && unsupportedMembers.length === 0) {
+      return { kind: 'scalar', scalarKind: 'string' };
+    }
+
+    if (scalarMembers.length >= 1 && unsupportedMembers.length === 0 && enumMembers.length === 0) {
+      if (scalarMembers.some(member => member.scalarKind === 'string')) {
+        return { kind: 'scalar', scalarKind: 'string' };
+      }
+      if (scalarMembers.some(member => member.scalarKind === 'number')) {
+        return { kind: 'scalar', scalarKind: 'number' };
+      }
+      if (scalarMembers.some(member => member.scalarKind === 'boolean')) {
+        return { kind: 'scalar', scalarKind: 'boolean' };
+      }
+    }
+
+    return { kind: 'unsupported' };
+  };
+
+  if (ts.isArrayTypeNode(normalizedTypeNode)) {
+    const elementNode = unwrapParenthesizedType(normalizedTypeNode.elementType);
+    const result = analyzeScalarLikeNode(elementNode);
+    const unionResult = ts.isUnionTypeNode(elementNode) ? analyzeUnionNode(elementNode) : null;
+    return {
+      ...(unionResult ?? result),
+      isArray: true,
+      nullable,
+      optionalFromUndefined,
+    };
+  }
+
+  if (
+    ts.isTypeReferenceNode(normalizedTypeNode) &&
+    normalizedTypeNode.typeName.getText() === 'Array' &&
+    normalizedTypeNode.typeArguments?.length === 1
+  ) {
+    const elementNode = unwrapParenthesizedType(normalizedTypeNode.typeArguments[0]);
+    const result = analyzeScalarLikeNode(elementNode);
+    const unionResult = ts.isUnionTypeNode(elementNode) ? analyzeUnionNode(elementNode) : null;
+    return {
+      ...(unionResult ?? result),
+      isArray: true,
+      nullable,
+      optionalFromUndefined,
+    };
+  }
+
+  if (ts.isUnionTypeNode(normalizedTypeNode)) {
+    const result = analyzeUnionNode(normalizedTypeNode);
+    return {
+      ...result,
+      isArray: false,
+      nullable,
+      optionalFromUndefined,
+    };
+  }
+
+  const result = analyzeScalarLikeNode(normalizedTypeNode);
+  return {
+    ...result,
+    isArray: false,
+    nullable,
+    optionalFromUndefined,
+  };
+};
+
+const escapeSingleQuotes = (value: string) => value.replace(/\\/g, String.raw`\\`).replace(/'/g, String.raw`\'`);
+const sortAlphabetically = (a: string, b: string) => a.localeCompare(b);
+
+const collectEnumTypeReferences = (typeNode: ts.TypeNode, enumNames: Set<string>, collected = new Set<string>()): Set<string> => {
+  const visit = (node: ts.Node) => {
+    if (ts.isTypeReferenceNode(node) && ts.isIdentifier(node.typeName) && enumNames.has(node.typeName.text)) {
+      collected.add(node.typeName.text);
+    }
+    ts.forEachChild(node, visit);
+  };
+
+  visit(typeNode);
+  return collected;
+};
+
+const collectInterfaceTypeReferences = (
+  typeNode: ts.TypeNode,
+  interfaceNames: Set<string>,
+  collected = new Set<string>(),
+): Set<string> => {
+  const visit = (node: ts.Node) => {
+    if (ts.isTypeReferenceNode(node) && ts.isIdentifier(node.typeName) && interfaceNames.has(node.typeName.text)) {
+      collected.add(node.typeName.text);
+    }
+    ts.forEachChild(node, visit);
+  };
+
+  visit(typeNode);
+  return collected;
+};
+
+const orderInterfaceDeclarations = (
+  interfaceDeclarations: ts.InterfaceDeclaration[],
+  interfaceNames: Set<string>,
+): ts.InterfaceDeclaration[] => {
+  const dependencyNodes: InterfaceDependencyNode[] = interfaceDeclarations.map((declaration, sourceIndex) => ({
+    name: declaration.name.text,
+    declaration,
+    dependencies: new Set<string>(),
+    sourceIndex,
+  }));
+
+  const nodesByName = new Map<string, InterfaceDependencyNode>(dependencyNodes.map(node => [node.name, node]));
+
+  for (const node of dependencyNodes) {
+    for (const member of node.declaration.members) {
+      if (!ts.isPropertySignature(member) || !member.type) {
+        continue;
+      }
+
+      collectInterfaceTypeReferences(member.type, interfaceNames).forEach(interfaceName => {
+        if (interfaceName !== node.name) {
+          node.dependencies.add(interfaceName);
+        }
+      });
+    }
+  }
+
+  const sortBySourceIndex = (a: string, b: string) => (nodesByName.get(a)?.sourceIndex ?? 0) - (nodesByName.get(b)?.sourceIndex ?? 0);
+  const visiting = new Set<string>();
+  const visited = new Set<string>();
+  const orderedNames: string[] = [];
+
+  const visit = (name: string): void => {
+    if (visited.has(name) || visiting.has(name)) {
+      return;
+    }
+
+    const node = nodesByName.get(name);
+    if (!node) {
+      return;
+    }
+
+    visiting.add(name);
+    for (const dependencyName of Array.from(node.dependencies).sort(sortBySourceIndex)) {
+      visit(dependencyName);
+    }
+    visiting.delete(name);
+
+    visited.add(name);
+    orderedNames.push(name);
+  };
+
+  for (const node of dependencyNodes) {
+    visit(node.name);
+  }
+
+  return orderedNames.map(name => nodesByName.get(name)?.declaration).filter((declaration): declaration is ts.InterfaceDeclaration => Boolean(declaration));
+};
+
+const getPropertyKey = (name: ts.PropertyName): string | null => {
+  if (ts.isIdentifier(name)) {
+    return name.text;
+  }
+  if (ts.isStringLiteral(name) || ts.isNumericLiteral(name)) {
+    return `'${escapeSingleQuotes(name.text)}'`;
+  }
+  return null;
+};
+
+const buildDecorators = (
+  analysis: TypeAnalysis,
+  isOptional: boolean,
+  classValidatorImports: Set<string>,
+  classTransformerImports: Set<string>,
+  customImports: Set<string>,
+  enumImports: Set<string>,
+) => {
+  const decorators: string[] = [];
+
+  if (analysis.nullable) {
+    customImports.add('IsNullable');
+    decorators.push('@IsNullable()');
+  }
+
+  if (analysis.nullable && !isOptional) {
+    classValidatorImports.add('ValidateIf');
+    decorators.push('@ValidateIf((_obj, value) => value !== null)');
+  }
+
+  if (isOptional) {
+    classValidatorImports.add('IsOptional');
+    decorators.push('@IsOptional()');
+  } else {
+    classValidatorImports.add('IsDefined');
+    decorators.push('@IsDefined()');
+  }
+
+  const addScalarDecorator = (kind: ScalarKind, each = false) => {
+    if (kind === 'string') {
+      classValidatorImports.add('IsString');
+      decorators.push(each ? '@IsString({ each: true })' : '@IsString()');
+      return;
+    }
+
+    if (kind === 'number') {
+      classValidatorImports.add('IsInt');
+      decorators.push(each ? '@IsInt({ each: true })' : '@IsInt()');
+      return;
+    }
+
+    classValidatorImports.add('IsBoolean');
+    decorators.push(each ? '@IsBoolean({ each: true })' : '@IsBoolean()');
+  };
+
+  if (analysis.kind === 'scalar' && analysis.scalarKind) {
+    addScalarDecorator(analysis.scalarKind, analysis.isArray);
+    return decorators;
+  }
+
+  if (analysis.kind === 'enum' && analysis.enumName) {
+    enumImports.add(analysis.enumName);
+    classValidatorImports.add('IsEnum');
+    decorators.push(analysis.isArray ? `@IsEnum(${analysis.enumName}, { each: true })` : `@IsEnum(${analysis.enumName})`);
+    return decorators;
+  }
+
+  if (analysis.kind === 'nested' && analysis.nestedName) {
+    classValidatorImports.add('ValidateNested');
+    classTransformerImports.add('Type');
+    decorators.push(analysis.isArray ? '@ValidateNested({ each: true })' : '@ValidateNested()', `@Type(() => ${analysis.nestedName})`);
+    return decorators;
+  }
+
+  classValidatorImports.add('Allow');
+  decorators.push('@Allow()');
+  return decorators;
+};
+
+const renderPropertyLine = (
+  member: ts.PropertySignature,
+  sourceFile: ts.SourceFile,
+  context: RenderPropertyContext,
+) => {
+  if (!member.type || !member.name) {
+    return null;
+  }
+
+  const propertyKey = getPropertyKey(member.name);
+  if (!propertyKey) {
+    return null;
+  }
+
+  const analysis = analyzeTypeNode(member.type, context.interfaceNames, context.enumNames);
+  collectEnumTypeReferences(member.type, context.enumNames).forEach(enumName => context.importSets.enumImports.add(enumName));
+  const isOptional = Boolean(member.questionToken) || analysis.optionalFromUndefined;
+  const decorators = buildDecorators(
+    analysis,
+    isOptional,
+    context.importSets.classValidatorImports,
+    context.importSets.classTransformerImports,
+    context.importSets.customImports,
+    context.importSets.enumImports,
+  );
+  const typeText = member.type.getText(sourceFile);
+  const propertyLine = `${propertyKey}${isOptional ? '?' : '!'}: ${typeText};`;
+
+  return [...decorators, propertyLine];
+};
+
+export const renderContractClassesSource = (sourceText: string, importPath = './data-contracts'): string | null => {
+  const sourceFile = ts.createSourceFile('data-contracts.ts', sourceText, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+
+  const interfaceDeclarations = sourceFile.statements.filter(ts.isInterfaceDeclaration);
+  if (!interfaceDeclarations.length) {
+    return null;
+  }
+
+  const enumNames = new Set<string>(sourceFile.statements.filter(ts.isEnumDeclaration).map(enumDeclaration => enumDeclaration.name.text));
+  const interfaceNames = new Set<string>(interfaceDeclarations.map(interfaceDeclaration => interfaceDeclaration.name.text));
+  const orderedInterfaceDeclarations = orderInterfaceDeclarations(interfaceDeclarations, interfaceNames);
+
+  const importSets: ImportSets = {
+    classValidatorImports: new Set<string>(),
+    classTransformerImports: new Set<string>(),
+    customImports: new Set<string>(),
+    enumImports: new Set<string>(),
+  };
+  const renderContext: RenderPropertyContext = {
+    interfaceNames,
+    enumNames,
+    importSets,
+  };
+
+  const classBlocks: string[] = [];
+
+  for (const interfaceDeclaration of orderedInterfaceDeclarations) {
+    const classLines: string[] = [`export class ${interfaceDeclaration.name.text} {`];
+
+    for (const member of interfaceDeclaration.members) {
+      if (!ts.isPropertySignature(member)) {
+        continue;
+      }
+
+      const propertyLines = renderPropertyLine(member, sourceFile, renderContext);
+
+      if (!propertyLines) {
+        continue;
+      }
+
+      classLines.push(...propertyLines.map(line => `  ${line}`));
+    }
+
+    classLines.push('}');
+    classBlocks.push(classLines.join('\n'));
+  }
+
+  const imports: string[] = [];
+  if (importSets.enumImports.size > 0) {
+    imports.push(`import { ${Array.from(importSets.enumImports).sort(sortAlphabetically).join(', ')} } from '${importPath}';`);
+  }
+  if (importSets.classTransformerImports.size > 0) {
+    imports.push(`import { ${Array.from(importSets.classTransformerImports).sort(sortAlphabetically).join(', ')} } from 'class-transformer';`);
+  }
+  if (importSets.classValidatorImports.size > 0) {
+    imports.push(`import { ${Array.from(importSets.classValidatorImports).sort(sortAlphabetically).join(', ')} } from 'class-validator';`);
+  }
+  if (importSets.customImports.size > 0) {
+    imports.push(`import { ${Array.from(importSets.customImports).sort(sortAlphabetically).join(', ')} } from '@/utils/custom-validation-classes';`);
+  }
+
+  return `${GENERATED_HEADER}\n${imports.join('\n')}\n\n${classBlocks.join('\n\n')}\n`;
+};
+
+export const generateContractClassesForFile = (filePath: string): string | null => {
+  const sourceText = fs.readFileSync(filePath, 'utf-8');
+  const fileNameWithoutExt = path.basename(filePath, '.ts');
+  const rendered = renderContractClassesSource(sourceText, `./${fileNameWithoutExt}`);
+
+  if (!rendered) {
+    return null;
+  }
+
+  const outputPath = filePath.replace(/\.ts$/, '.classes.ts');
+  fs.writeFileSync(outputPath, rendered, 'utf-8');
+  return outputPath;
+};
+
+const collectContractFiles = (directoryPath: string): string[] => {
+  const results: string[] = [];
+  const entries = fs.readdirSync(directoryPath, { withFileTypes: true });
+
+  for (const entry of entries) {
+    const entryPath = path.join(directoryPath, entry.name);
+    if (entry.isDirectory()) {
+      results.push(...collectContractFiles(entryPath));
+      continue;
+    }
+
+    if (!entry.isFile()) {
+      continue;
+    }
+
+    if (entry.name.endsWith('.classes.ts') || !entry.name.endsWith('.ts')) {
+      continue;
+    }
+
+    results.push(entryPath);
+  }
+
+  return results;
+};
+
+export const generateContractClassesForDirectory = (directoryPath: string): string[] => {
+  if (!fs.existsSync(directoryPath)) {
+    return [];
+  }
+
+  const contractFiles = collectContractFiles(directoryPath);
+  const generatedFiles: string[] = [];
+
+  for (const contractFilePath of contractFiles) {
+    const generated = generateContractClassesForFile(contractFilePath);
+    if (generated) {
+      generatedFiles.push(generated);
+    }
+  }
+
+  return generatedFiles;
+};

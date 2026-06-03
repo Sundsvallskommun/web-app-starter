@@ -2,7 +2,9 @@ import { HttpException } from '@/exceptions/HttpException';
 import { RequestWithUser } from '@/interfaces/auth.interface';
 import { ClientUser } from '@/interfaces/users.interface';
 import { UserApiResponse } from '@/responses/user.response';
+import { assertResponseContract } from '@/utils/assert-response-contract';
 import authMiddleware from '@middlewares/auth.middleware';
+import { Response } from 'express';
 import { Controller, Get, Req, Res, UseBefore } from 'routing-controllers';
 import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 
@@ -14,7 +16,7 @@ export class UserController {
   })
   @ResponseSchema(UserApiResponse)
   @UseBefore(authMiddleware)
-  async getUser(@Req() req: RequestWithUser, @Res() response: any): Promise<ClientUser> {
+  async getUser(@Req() req: RequestWithUser, @Res() response: Response<UserApiResponse>): Promise<Response<UserApiResponse>> {
     const { name, username } = req.user;
 
     if (!name) {
@@ -26,6 +28,9 @@ export class UserController {
       username: username,
     };
 
-    return response.send({ data: userData, message: 'success' });
+    const payload: UserApiResponse = { data: userData, message: 'success' };
+    assertResponseContract(UserApiResponse, payload);
+
+    return response.send(payload);
   }
 }
