@@ -2,9 +2,7 @@ import { ColorSchemeMode } from '@sk-web-gui/react';
 
 import { ResourceName } from './resource-name';
 
-type TableProperty = string;
-
-type Headers = Partial<Record<ResourceName, TableProperty[]>>;
+type Headers = Partial<Record<ResourceName, string[]>>;
 
 interface DataStorage {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

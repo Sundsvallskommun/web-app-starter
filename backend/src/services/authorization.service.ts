@@ -73,5 +73,6 @@ export const getRole = (groups: ADRole[]): InternalRole | undefined => {
     }
   });
 
-  return matchedRoles.sort((a, b) => (RoleOrderEnum[a] > RoleOrderEnum[b] ? 1 : 0))[0];
+  const sortedByPermissions = [...matchedRoles].sort((a, b) => (RoleOrderEnum[a] > RoleOrderEnum[b] ? 1 : 0));
+  return sortedByPermissions[0];
 };

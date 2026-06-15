@@ -37,7 +37,7 @@ export const luhnCheck = (str = ''): boolean => {
   //str += '';
 
   for (let i = 0, l = str.length; i < l; i++) {
-    let v = parseInt(str.charAt(i), 10);
+    let v = Number.parseInt(str.charAt(i), 10);
     v *= 2 - (i % 2);
     if (v > 9) {
       v -= 9;

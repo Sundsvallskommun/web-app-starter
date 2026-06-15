@@ -52,7 +52,7 @@ import { additionalConverters } from './utils/custom-validation-classes';
 import { isValidOrigin } from './utils/isValidOrigin';
 import { isValidUrl } from './utils/util';
 
-const corsWhitelist = ORIGIN.split(',');
+const corsWhitelist = new Set(ORIGIN.split(','));
 
 const SessionStoreCreate = SESSION_MEMORY ? createMemoryStore(session) : createFileStore(session);
 const sessionTTL = 4 * 24 * 60 * 60;
@@ -214,7 +214,7 @@ class App {
       cors({
         credentials: CREDENTIALS,
         origin: function (origin, callback) {
-          if (origin === undefined || corsWhitelist.includes(origin) || corsWhitelist.includes('*')) {
+          if (origin === undefined || corsWhitelist.has(origin) || corsWhitelist.has('*')) {
             callback(null, true);
           } else {
             if (NODE_ENV == 'development') {
