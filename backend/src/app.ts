@@ -31,6 +31,7 @@ import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express, { RequestHandler } from 'express';
+import rateLimit from 'express-rate-limit';
 import session from 'express-session';
 import { existsSync, mkdirSync } from 'fs';
 import helmet from 'helmet';
@@ -186,6 +187,9 @@ class App {
 
   private initializeMiddlewares() {
     this.app.use(morgan(LOG_FORMAT, { stream }));
+    // Baseline rate limiting for every route (auth flows, swagger, proxied APIs). Tune per
+    // deployment; deployments behind a gateway may also rate-limit at the edge.
+    this.app.use(rateLimit({ windowMs: 15 * 60 * 1000, limit: 1000, standardHeaders: true, legacyHeaders: false }));
     this.app.use(hpp());
     this.app.use(helmet());
     this.app.use(compression());
