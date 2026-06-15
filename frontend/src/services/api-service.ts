@@ -9,7 +9,7 @@ export interface ApiResponse<T = unknown> {
   message: string;
 }
 
-export const handleError = (error: AxiosError<ApiResponse>) => {
+const handleError = (error: AxiosError<ApiResponse>) => {
   if (!protectedRoutes.includes(window?.location.pathname)) throw error;
 
   //TODO: Refactor to be more compliant with NextJS routing standards
@@ -28,26 +28,26 @@ const defaultOptions = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const get = <T>(url: string, options?: { [key: string]: any }) =>
+const get = <T>(url: string, options?: Record<string, any>) =>
   axios.get<T>(apiURL(url), { ...defaultOptions, ...options }).catch(handleError);
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const post = <T>(url: string, data: any, options?: { [key: string]: any }) => {
+const post = <T>(url: string, data: any, options?: Record<string, any>) => {
   return axios.post<T>(apiURL(url), data, { ...defaultOptions, ...options }).catch(handleError);
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const remove = <T>(url: string, options?: { [key: string]: any }) => {
+const remove = <T>(url: string, options?: Record<string, any>) => {
   return axios.delete<T>(apiURL(url), { ...defaultOptions, ...options }).catch(handleError);
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const patch = <T>(url: string, data: any, options?: { [key: string]: any }) => {
+const patch = <T>(url: string, data: any, options?: Record<string, any>) => {
   return axios.patch<T>(apiURL(url), data, { ...defaultOptions, ...options }).catch(handleError);
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const put = <T>(url: string, data: any, options?: { [key: string]: any }) => {
+const put = <T>(url: string, data: any, options?: Record<string, any>) => {
   return axios.put<T>(apiURL(url), data, { ...defaultOptions, ...options }).catch(handleError);
 };
 

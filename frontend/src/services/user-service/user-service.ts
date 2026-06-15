@@ -1,10 +1,11 @@
-import { ApiResponse, apiService } from '../api-service';
+import { User } from '@data-contracts/backend/data-contracts';
+import { ServiceResponse } from '@interfaces/services';
+import { __DEV__ } from '@sk-web-gui/react';
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { __DEV__ } from '@sk-web-gui/react';
+
+import { ApiResponse, apiService } from '../api-service';
 import { emptyUser } from './defaults';
-import { ServiceResponse } from '@interfaces/services';
-import { User } from '@data-contracts/backend/data-contracts';
 
 const handleSetUserResponse: (res: ApiResponse<User>) => User = (res) => ({
   name: res.data.name,
@@ -16,10 +17,13 @@ const getMe: () => Promise<ServiceResponse<User>> = () => {
   return apiService
     .get<ApiResponse<User>>('me')
     .then((res) => ({ data: handleSetUserResponse(res.data) }))
-    .catch((e) => ({
-      message: e.response?.data.message,
-      error: e.response?.status ?? 'UNKNOWN ERROR',
-    }));
+    .catch((e: unknown) => {
+      const err = e as { response?: { status?: number; data?: { message?: string } } };
+      return {
+        message: err.response?.data?.message,
+        error: err.response?.status ?? 'UNKNOWN ERROR',
+      };
+    });
 };
 
 interface State {
@@ -39,7 +43,9 @@ export const useUserStore = create<State & Actions>()(
   devtools(
     (set, get) => ({
       ...initialState,
-      setUser: (user) => set(() => ({ user })),
+      setUser: (user) => {
+        set(() => ({ user }));
+      },
       getMe: async () => {
         let user = get().user;
         const res = await getMe();
