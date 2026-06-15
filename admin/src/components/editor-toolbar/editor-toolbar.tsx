@@ -1,4 +1,5 @@
 import resources from '@config/resources';
+import { ResourceResponse } from '@interfaces/resource';
 import { ResourceName } from '@interfaces/resource-name';
 import { Button, Icon, useConfirm } from '@sk-web-gui/react';
 import { useCrudHelper } from '@utils/use-crud-helpers';
@@ -16,7 +17,7 @@ interface ToolbarProps {
 
 export const EditorToolbar: React.FC<ToolbarProps> = ({ resource, isDirty, id }) => {
   const router = useRouter();
-  const parentPath = resource ? `/${resource}` : router.pathname.split('/[')[0].replace('/new', '');
+  const parentPath = resource ? `/${resource}` : (router.pathname.split('/[')[0] ?? '').replace('/new', '');
   const { remove } = resources[resource];
   const { handleRemove } = useCrudHelper(resource);
   const confirm = useConfirm();
@@ -24,7 +25,7 @@ export const EditorToolbar: React.FC<ToolbarProps> = ({ resource, isDirty, id })
 
   const onRemove = () => {
     if (remove && id) {
-      confirm
+      void confirm
         .showConfirmation(
           capitalize(t('common:remove_resource', { resource: t(`${resource}:name_one`) })),
           capitalize(t('common:can_not_be_undone')),
@@ -32,18 +33,18 @@ export const EditorToolbar: React.FC<ToolbarProps> = ({ resource, isDirty, id })
           capitalize(t('common:keep_edit')),
           'error'
         )
-        .then((confirm) => {
-          if (confirm) {
-            handleRemove(remove(id)).then((res) => {
+        .then((confirmed) => {
+          if (confirmed) {
+            void handleRemove(() => remove(id) as ResourceResponse<unknown>).then((res) => {
               if (res) {
                 reset();
-                router.push(parentPath);
+                void router.push(parentPath);
               }
             });
           }
         });
     } else if (!id) {
-      router.push(parentPath);
+      void router.push(parentPath);
     }
   };
 
@@ -61,7 +62,7 @@ export const EditorToolbar: React.FC<ToolbarProps> = ({ resource, isDirty, id })
         aria-label={capitalize(t('common:save'))}
       ></Button>
 
-      {((!!remove && id) || !id) && (
+      {((!!remove && !!id) || !id) && (
         <>
           <Button
             variant="tertiary"
@@ -70,7 +71,9 @@ export const EditorToolbar: React.FC<ToolbarProps> = ({ resource, isDirty, id })
             iconButton
             aria-label={capitalize(t('common:remove', { resource: t(`${resource}:name_one`) }))}
             size="sm"
-            onClick={() => onRemove()}
+            onClick={() => {
+              onRemove();
+            }}
           >
             <Icon icon={<Trash />} />
           </Button>

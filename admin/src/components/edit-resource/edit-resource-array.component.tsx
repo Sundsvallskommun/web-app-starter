@@ -8,6 +8,7 @@ import { useEffect } from 'react';
 import { FieldError, FieldErrorsImpl, FieldValues, Merge, useFormContext } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { capitalize } from 'underscore.string';
+
 import { EditResourceObject } from './edit-resource-object.component';
 
 interface EditResourceArrayProps {
@@ -28,9 +29,7 @@ export const EditResourceArray: React.FC<EditResourceArrayProps> = ({
 
   const { t } = useTranslation();
 
-  type CreateType = Parameters<NonNullable<Resource<FieldValues>['create']>>[0];
-  type UpdateType = Parameters<NonNullable<Resource<FieldValues>['update']>>[1];
-  type DataType = CreateType | UpdateType;
+  type DataType = Parameters<NonNullable<Resource<FieldValues>['create']>>[0];
 
   const dataTypeKey = parents ? `${parents}.${property}` : property;
   const i18nKey = fieldpathWithoutIndex(dataTypeKey) as string;
@@ -44,39 +43,39 @@ export const EditResourceArray: React.FC<EditResourceArrayProps> = ({
     formState: { errors },
   } = useFormContext<DataType>();
 
-  const formdata = watch(dataTypeKey as keyof DataType) as DataType;
+  const formdata = watch(dataTypeKey) as DataType;
 
   const addEntry = () => {
     if (Array.isArray(formdata)) {
-      const newEntry = dataTypeKey.split('.').reduce((entries: DataType, part) => {
-        const numberTest = new RegExp(/^\d+$/);
-        const property = numberTest.test(part) ? 0 : part;
-        return entries?.[property] || defaultValues?.[property as keyof typeof defaultValues];
-      }, {} as DataType);
-      const entries = [...formdata, ...(Array.isArray(newEntry) ? newEntry : [newEntry])];
-      setValue(dataTypeKey as keyof DataType, entries as typeof formdata);
+      const newEntry = dataTypeKey.split('.').reduce<unknown>((entries, part) => {
+        const property = /^\d+$/.test(part) ? 0 : part;
+        const current = entries as Record<string | number, unknown> | undefined;
+        return current?.[property] ?? defaultValues?.[property as keyof typeof defaultValues];
+      }, {});
+      const entries = [...(formdata as unknown[]), ...(Array.isArray(newEntry) ? (newEntry as unknown[]) : [newEntry])];
+      // The field path and value are fully dynamic here, so cast to satisfy setValue's generic.
+      setValue(dataTypeKey, entries as never);
     }
   };
 
   const removeEntry = (index: number) => {
     if (Array.isArray(formdata)) {
-      const entries = [...formdata];
+      const entries = [...(formdata as unknown[])];
       entries.splice(index, 1);
-      setValue(dataTypeKey as keyof DataType, entries as typeof formdata);
+      setValue(dataTypeKey, entries as never);
     }
   };
 
   useEffect(() => {
     if (requiredFields && fieldpathWithoutIndex(requiredFields)?.includes(i18nKey)) {
       if (Array.isArray(formdata) && formdata.length > 0) {
-        clearErrors(dataTypeKey as keyof DataType);
+        clearErrors(dataTypeKey);
       } else {
-        setError(dataTypeKey as keyof DataType, {
+        setError(dataTypeKey, {
           message: t('common:required', { resource: capitalize(t(`${resource}:properties.${i18nKey}.DEFAULT_many`)) }),
         });
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formdata]);
 
   const error = dataTypeKey
@@ -88,8 +87,8 @@ export const EditResourceArray: React.FC<EditResourceArrayProps> = ({
           | Merge<FieldError, FieldErrorsImpl<DataType>>
           | undefined;
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return errors?.[key] as FieldError | Merge<FieldError, FieldErrorsImpl<any>> | undefined;
+
+      return errors?.[key];
     }, undefined);
 
   const Headercomp: React.ElementType = `h${level}` as React.ElementType;
@@ -100,12 +99,21 @@ export const EditResourceArray: React.FC<EditResourceArrayProps> = ({
         <Headercomp className={cx('font-header', level < 3 ? 'text-h3-lg' : 'text-h4-md')}>
           {capitalize(t(`${resource}:properties.${i18nKey}.DEFAULT_many`))}
         </Headercomp>
-        <Button size="sm" color="success" leftIcon={<Plus />} onClick={() => addEntry()}>
+        <Button
+          size="sm"
+          color="success"
+          leftIcon={<Plus />}
+          onClick={() => {
+            addEntry();
+          }}
+        >
           {capitalize(t('common:add'))} {t(`${resource}:properties.${i18nKey}.DEFAULT`)}
         </Button>
       </header>
       {error?.message && (
-        <FormErrorMessage className="font-bold text-error-text-primary">{`${error.message}`}</FormErrorMessage>
+        <FormErrorMessage className="font-bold text-error-text-primary">
+          {typeof error.message === 'string' ? error.message : ''}
+        </FormErrorMessage>
       )}
       {Array.isArray(formdata) &&
         formdata.map((item, index) => {
@@ -116,10 +124,7 @@ export const EditResourceArray: React.FC<EditResourceArrayProps> = ({
               <div key={`res-array-${index}`} className="flex justify-between items-start">
                 <FormControl key={`formc-${index}`} required={isRequired}>
                   <FormLabel>{capitalize(t(`${resource}:properties.${i18nKey}`))}</FormLabel>
-                  <Input
-                    type={type === 'number' ? 'number' : 'text'}
-                    {...register(`${dataTypeKey}.${index}` as keyof DataType)}
-                  />
+                  <Input type={type === 'number' ? 'number' : 'text'} {...register(`${dataTypeKey}.${index}`)} />
                 </FormControl>
                 <Button
                   size="sm"
@@ -131,7 +136,9 @@ export const EditResourceArray: React.FC<EditResourceArrayProps> = ({
                       resource: t(`${resource}:properties.${i18nKey}.DEFAULT`),
                     })
                   )}
-                  onClick={() => removeEntry(index)}
+                  onClick={() => {
+                    removeEntry(index);
+                  }}
                 >
                   <Minus />
                 </Button>
@@ -155,9 +162,12 @@ export const EditResourceArray: React.FC<EditResourceArrayProps> = ({
                   property={index.toString()}
                   index={index}
                   removable
-                  onRemove={() => removeEntry(index)}
+                  onRemove={() => {
+                    removeEntry(index);
+                  }}
                 />;
           }
+          return null;
         })}
     </div>
   );

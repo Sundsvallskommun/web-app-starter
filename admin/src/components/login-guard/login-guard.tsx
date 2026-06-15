@@ -4,7 +4,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
-export const LoginGuard: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
+const LoginGuard: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
   const user = useUserStore(useShallow((s) => s.user));
   const getMe = useUserStore(useShallow((s) => s.getMe));
 
@@ -12,10 +12,9 @@ export const LoginGuard: React.FC<{ children?: React.ReactNode }> = ({ children 
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    getMe().finally(() => {
+    void getMe().finally(() => {
       setIsLoading(false);
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (isLoading || (!user.name && !router.pathname.includes('/login'))) {

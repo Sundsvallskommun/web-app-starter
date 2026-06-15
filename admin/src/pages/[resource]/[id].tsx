@@ -12,10 +12,10 @@ import { stringToResourceName } from '@utils/stringToResourceName';
 import { useCrudHelper } from '@utils/use-crud-helpers';
 import { useResource } from '@utils/use-resource';
 import { GetServerSideProps } from 'next';
-import { useTranslation } from 'next-i18next';
-import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import { useParams } from 'next/navigation';
 import { useRouter } from 'next/router';
+import { useTranslation } from 'next-i18next/pages';
+import { serverSideTranslations } from 'next-i18next/pages/serverSideTranslations';
 import { useEffect, useState } from 'react';
 import { FieldValues, FormProvider, useForm } from 'react-hook-form';
 import { capitalize } from 'underscore.string';
@@ -25,19 +25,21 @@ export const EditAssistant: React.FC = () => {
   const router = useRouter();
 
   const { resource: _resource, id: _id } = useParams();
-  const resource = stringToResourceName(typeof _resource === 'object' ? _resource[0] : _resource);
-  if (!resource) {
-    router.push('/');
-  }
+  const parsedResource = stringToResourceName(typeof _resource === 'object' ? (_resource[0] ?? '') : (_resource ?? ''));
+  const resource: ResourceName = parsedResource ?? (Object.keys(resources)[0] as ResourceName);
 
-  const { create, update, getOne, defaultValues } = resources[resource as ResourceName];
-  const { refresh } = useResource(resource as ResourceName);
+  useEffect(() => {
+    if (!parsedResource) {
+      void router.push('/');
+    }
+  }, [parsedResource, router]);
 
-  const { handleGetOne, handleCreate, handleUpdate } = useCrudHelper(resource as ResourceName);
+  const { create, update, getOne, defaultValues } = resources[resource];
+  const { refresh } = useResource(resource);
 
-  type CreateType = Parameters<NonNullable<Resource<FieldValues>['create']>>[0];
-  type UpdateType = Parameters<NonNullable<Resource<FieldValues>['update']>>[1];
-  type DataType = CreateType | UpdateType;
+  const { handleGetOne, handleCreate, handleUpdate } = useCrudHelper(resource);
+
+  type DataType = Parameters<NonNullable<Resource<FieldValues>['create']>>[0];
 
   const form = useForm<DataType>({
     defaultValues: defaultValues,
@@ -68,7 +70,7 @@ export const EditAssistant: React.FC = () => {
 
   useEffect(() => {
     if (id) {
-      handleGetOne(() => getOne(id)).then((res) => {
+      void handleGetOne(() => getOne(id)).then((res) => {
         reset(res);
         setIsNew(false);
         setLoaded(true);
@@ -78,14 +80,12 @@ export const EditAssistant: React.FC = () => {
       setIsNew(true);
       setLoaded(true);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   useEffect(() => {
     if (navigate) {
-      router.push(`/${resource}/${formdata?.id}`);
+      void router.push(`/${resource}/${String((formdata?.id as string | number | undefined) ?? '')}`);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate]);
 
   useEffect(() => {
@@ -99,7 +99,7 @@ export const EditAssistant: React.FC = () => {
       create as NonNullable<Resource<FieldValues>['create']>;
     switch (isNew) {
       case true:
-        handleCreate(() => createFunc(data as CreateType)).then((res) => {
+        void handleCreate(() => createFunc(data)).then((res) => {
           if (res) {
             reset(res);
             refresh();
@@ -109,7 +109,7 @@ export const EditAssistant: React.FC = () => {
         break;
       case false:
         if (id) {
-          handleUpdate(() => update?.(id, data) as ResourceResponse<Partial<FieldValues>>).then((res) => {
+          void handleUpdate(() => update?.(id, data) as ResourceResponse<Partial<FieldValues>>).then((res) => {
             reset(res);
             refresh();
           });
@@ -118,16 +118,16 @@ export const EditAssistant: React.FC = () => {
     }
   };
 
-  return !loaded || !resource ?
+  return !loaded || !parsedResource ?
       <LoaderFullScreen />
     : <EditLayout
         headerInfo={
           !isNew ?
             <ul className="text-small flex gap-16">
               {defaultInformationFields.map((field, index) => (
-                <li key={index + field}>
+                <li key={`${index}-${field}`}>
                   <strong>{capitalize(t(`common:${field}`))}: </strong>
-                  {formdata?.[field]}
+                  {String((formdata?.[field] as string | number | boolean | undefined) ?? '')}
                 </li>
               ))}
             </ul>
@@ -141,7 +141,10 @@ export const EditAssistant: React.FC = () => {
         backLink={`/${resource}`}
       >
         <FormProvider {...form}>
-          <form className="flex flex-row gap-32 justify-between grow flex-wrap" onSubmit={handleSubmit(onSubmit)}>
+          <form
+            className="flex flex-row gap-32 justify-between grow flex-wrap"
+            onSubmit={(e) => void handleSubmit(onSubmit)(e)}
+          >
             <EditorToolbar resource={resource} isDirty={isDirty} id={id} />
             <EditResource resource={resource} isNew={isNew} />
           </form>

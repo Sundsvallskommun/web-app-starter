@@ -13,14 +13,12 @@ export default function Logout() {
   useEffect(() => {
     resetUser();
     localStorage.clear();
-    router.push({
+    void router.push({
       pathname: apiURL('/saml/logout'),
       query: {
         successRedirect: `${appURL()}/login?loggedout`,
       },
     });
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return <></>;

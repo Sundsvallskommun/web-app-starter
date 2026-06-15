@@ -1,18 +1,19 @@
 import { ColorSchemeMode } from '@sk-web-gui/react';
+
 import { ResourceName } from './resource-name';
 
-export type TableProperty = string;
+type TableProperty = string;
 
-export type Headers = Partial<Record<ResourceName, Array<TableProperty>>>;
+type Headers = Partial<Record<ResourceName, TableProperty[]>>;
 
-export interface DataStorage {
+interface DataStorage {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data?: Record<string, any>[];
   loaded: boolean;
   loading: boolean;
 }
 
-export type ResourceData = Partial<Record<ResourceName, DataStorage>>;
+type ResourceData = Partial<Record<ResourceName, DataStorage>>;
 
 export interface LocalStorage {
   colorScheme: ColorSchemeMode;

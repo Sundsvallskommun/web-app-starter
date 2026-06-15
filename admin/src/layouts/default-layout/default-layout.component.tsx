@@ -1,12 +1,13 @@
 import { Menu } from '@components/menu/menu';
 import { useUserStore } from '@services/user-service/user-service';
 import { Avatar, ColorSchemeMode, Icon, Logo, PopupMenu } from '@sk-web-gui/react';
-import { useTranslation } from 'next-i18next';
+import { useLocalStorage } from '@utils/use-localstorage.hook';
+import { Check, ChevronRight, Monitor, Moon, Sun } from 'lucide-react';
 import Head from 'next/head';
 import NextLink from 'next/link';
+import { useTranslation } from 'next-i18next/pages';
+import { ReactElement } from 'react';
 import { capitalize } from 'underscore.string';
-import { ChevronRight, Sun, Moon, Monitor, Check } from 'lucide-react';
-import { useLocalStorage } from '@utils/use-localstorage.hook';
 import { useShallow } from 'zustand/react/shallow';
 
 interface DefaultLayoutProps {
@@ -19,7 +20,7 @@ interface DefaultLayoutProps {
 
 export default function DefaultLayout({ title, postTitle, headerSubtitle, children }: DefaultLayoutProps) {
   const layoutTitle = `${process.env.NEXT_PUBLIC_APP_NAME} admin${headerSubtitle ? ` - ${headerSubtitle}` : ''}`;
-  const fullTitle = postTitle ? `${layoutTitle} - ${postTitle}` : `${layoutTitle}`;
+  const fullTitle = postTitle ? `${layoutTitle} - ${postTitle}` : layoutTitle;
   const [colorScheme, setColorScheme] = useLocalStorage(
     useShallow((state) => [state.colorScheme, state.setColorScheme])
   );
@@ -31,7 +32,7 @@ export default function DefaultLayout({ title, postTitle, headerSubtitle, childr
     contentElement?.focus();
   };
 
-  const colorSchemeIcons: Record<ColorSchemeMode, JSX.Element> = {
+  const colorSchemeIcons: Record<ColorSchemeMode, ReactElement> = {
     light: <Sun />,
     dark: <Moon />,
     system: <Monitor />,
@@ -40,14 +41,18 @@ export default function DefaultLayout({ title, postTitle, headerSubtitle, childr
   return (
     <div className="DefaultLayout full-page-layout">
       <Head>
-        <title>{title ? title : fullTitle}</title>
+        <title>{title ?? fullTitle}</title>
         <meta name="description" content={`${process.env.NEXT_PUBLIC_APP_NAME} admin`} />
       </Head>
 
-      <NextLink href="#content" legacyBehavior passHref>
-        <a onClick={setFocusToMain} accessKey="s" className="next-link-a" data-cy="systemMessage-a">
-          {t('layout:header.goto_content')}
-        </a>
+      <NextLink
+        href="#content"
+        onClick={setFocusToMain}
+        accessKey="s"
+        className="next-link-a"
+        data-cy="systemMessage-a"
+      >
+        {t('layout:header.goto_content')}
       </NextLink>
 
       <div className="flex w-full min-h-screen h-full">
@@ -62,11 +67,11 @@ export default function DefaultLayout({ title, postTitle, headerSubtitle, childr
             <PopupMenu>
               <PopupMenu.Button variant="tertiary" showBackground={false} className="justify-start">
                 <Avatar
-                  initials={`${user.name
+                  initials={user.name
                     .split(' ')
                     .map((name) => name.charAt(0).toUpperCase())
                     .slice(0, 2)
-                    .join('')}`}
+                    .join('')}
                   size="sm"
                   rounded
                 />
@@ -88,16 +93,20 @@ export default function DefaultLayout({ title, postTitle, headerSubtitle, childr
                             {Object.keys(colorSchemeIcons).map((scheme) => (
                               <PopupMenu.Item key={`cs-${scheme}`}>
                                 <button
-                                  onClick={() => setColorScheme(scheme as ColorSchemeMode)}
+                                  onClick={() => {
+                                    setColorScheme(scheme as ColorSchemeMode);
+                                  }}
                                   role="menuitemradio"
-                                  aria-checked={scheme === colorScheme}
+                                  aria-checked={(scheme as ColorSchemeMode) === colorScheme}
                                   className="!justify-between min-w-[20rem]"
                                 >
                                   <span className="flex gap-12">
                                     {colorSchemeIcons[scheme as ColorSchemeMode]}
                                     {capitalize(t(`layout:color_schemes.${scheme}`))}
                                   </span>
-                                  {scheme === colorScheme && <Icon.Padded size={18} rounded icon={<Check />} />}
+                                  {(scheme as ColorSchemeMode) === colorScheme && (
+                                    <Icon.Padded size={18} rounded icon={<Check />} />
+                                  )}
                                 </button>
                               </PopupMenu.Item>
                             ))}

@@ -1,13 +1,13 @@
-import { useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/router';
-import { Button, FormErrorMessage } from '@sk-web-gui/react';
-import EmptyLayout from '@layouts/empty-layout/empty-layout.component';
 import LoaderFullScreen from '@components/loader/loader-fullscreen';
-import { appURL } from '@utils/app-url';
-import { useTranslation } from 'next-i18next';
-import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
+import EmptyLayout from '@layouts/empty-layout/empty-layout.component';
+import { Button, FormErrorMessage } from '@sk-web-gui/react';
 import { apiURL } from '@utils/api-url';
+import { appURL } from '@utils/app-url';
 import { GetServerSideProps } from 'next';
+import { useRouter } from 'next/router';
+import { useTranslation } from 'next-i18next/pages';
+import { serverSideTranslations } from 'next-i18next/pages/serverSideTranslations';
+import { useEffect, useRef, useState } from 'react';
 import { capitalize } from 'underscore.string';
 
 // Turn on/off automatic login
@@ -31,11 +31,11 @@ export default function Start() {
   };
 
   const onLogin = () => {
-    const path = router.query.path || new URLSearchParams(window.location.search).get('path') || '';
+    const path = router.query.path ?? new URLSearchParams(window.location.search).get('path') ?? '';
 
     const url = new URL(apiURL('/saml/login'));
     const queries = new URLSearchParams({
-      successRedirect: `${appURL(path as string)}`,
+      successRedirect: appURL(path as string),
       failureRedirect: `${appURL()}/login`,
     });
     url.search = queries.toString();
@@ -47,7 +47,7 @@ export default function Start() {
     setInitalFocus();
     if (!router.isReady) return;
     if (isLoggedOut) {
-      router.push(
+      void router.push(
         {
           pathname: '/login',
         },
@@ -66,7 +66,6 @@ export default function Start() {
         setIsLoading(false);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router.isReady]);
 
   if (isLoading) {
@@ -85,7 +84,14 @@ export default function Start() {
               <p className="my-0">{t('login:description')}</p>
             </div>
 
-            <Button inverted onClick={() => onLogin()} ref={initalFocus} data-cy="loginButton">
+            <Button
+              inverted
+              onClick={() => {
+                onLogin();
+              }}
+              ref={initalFocus}
+              data-cy="loginButton"
+            >
               {capitalize(t('common:login'))}
             </Button>
 
