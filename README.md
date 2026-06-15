@@ -9,7 +9,7 @@ Systemet utgår ifrån [api-config.ts](./backend/src/config/api-config.ts)/backe
 
 ### Krav
 
-- Node >= 20 LTS
+- Node >= 22.12 (CI använder Node 24; commitlint kräver >= 22.12)
 - Yarn
 
 ### Steg för steg
@@ -22,14 +22,13 @@ cd <web-app-projektnamn>
 git init
 ```
 
-2. Installera dependencies för både `backend` och `frontend`
+2. Installera dependencies. Kör i roten (sätter upp git-hooks via husky) och i varje paket:
 
 ```
-cd frontend
-yarn install
-
-cd backend
-yarn install
+yarn install            # rot: husky, commitlint, lint-staged
+cd backend && yarn install && cd ..
+cd frontend && yarn install && cd ..
+cd admin && yarn install && cd ..
 ```
 
 Om du behöver ett administrationsgränssnitt, se [Dokumentation om Admin](./admin/README.md).
@@ -58,15 +57,7 @@ redigera `.env.development.local` för behov. URLer, nycklar och cert behöver f
 - `SAML_IDP_PUBLIC_CERT` ska stämma överens med IDPens cert
 - `SAML_PRIVATE_KEY` och `SAML_PUBLIC_KEY` behöver bara fyllas i korrekt om man kör mot en riktig IDP
 
-5. Initiera eventuell databas för backend
-
-```
-cd backend
-yarn prisma:generate
-yarn prisma:migrate
-```
-
-6. Synca datamodeller för api:er
+5. Synca datamodeller för api:er
 
    Se till att README och /backend/src/config/api-config.ts matchar och justera utefter de api:er som önskas användas.
    - För backend, i /backend kör `yarn generate:contracts` för att få ned de senaste datamodellerna för samtliga api:er
@@ -74,6 +65,25 @@ yarn prisma:migrate
 
    - För frontend, se till att backend är igång (`yarn dev`), i /frontend kör `yarn generate:contracts` för att synca backend med frontend
      -- Justera om så behövs utifrån de uppdaterade modellerna
+
+### Kvalitetsgrindar & test
+
+Repot har strikta, type-aware kvalitetsgrindar. Kör hela sviten från roten med `yarn verify`
+(fan-out till `backend`, `frontend` och `admin`) eller per paket:
+
+| Kommando            | Vad det gör                                                                        |
+| ------------------- | ---------------------------------------------------------------------------------- |
+| `yarn lint:strict`  | ESLint flat config, `strictTypeChecked`, `any` förbjudet, 0 varningar              |
+| `yarn format:check` | Prettier (LF via `.gitattributes` + `.editorconfig`)                               |
+| `yarn type-check`   | `tsc --noEmit`, `strict` + `noUncheckedIndexedAccess`                              |
+| `yarn knip`         | Blockerar på död kod / oanvända exports / oanvända dependencies                     |
+| `yarn test`         | Vitest (backend: node/SWC, frontend & admin: jsdom + React Testing Library)        |
+| `yarn test:e2e`     | Playwright (frontend + admin)                                                       |
+| `yarn verify`       | Allt ovanpå (utom e2e), för alla paket                                              |
+
+Git-hooks (husky): **pre-commit** (console.log- + PII-scan + lint-staged), **commit-msg**
+(Conventional Commits), **pre-push** (lint + format + type-check + knip för alla paket).
+Använd inte `--no-verify` för att kringgå dem — åtgärda grundorsaken. Se [AGENTS.md](./AGENTS.md).
 
 ### Språkstöd
 
