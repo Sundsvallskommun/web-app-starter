@@ -5,6 +5,7 @@ import { API_BASE_URL, BASE_URL_PREFIX } from '@config';
  * @returns {Boolean} true & false
  * @description this value is Empty Check
  */
+/** @public */
 export const isEmpty = (value: string | number | object): boolean => {
   if (value === null) {
     return true;
@@ -19,6 +20,7 @@ export const isEmpty = (value: string | number | object): boolean => {
   }
 };
 
+/** @public */
 export const localApi = (...parts: string[]): string => {
   const urlParts = [BASE_URL_PREFIX, ...parts];
   return urlParts.map(pathPart => pathPart.replace(/(\/$)/g, '')).join('/');
@@ -29,12 +31,13 @@ export const apiURL = (...parts: string[]): string => {
   return urlParts.map(pathPart => pathPart.replace(/(^\/|\/$)/g, '')).join('/');
 };
 
+/** @public */
 export const luhnCheck = (str = ''): boolean => {
   let sum = 0;
   //str += '';
 
   for (let i = 0, l = str.length; i < l; i++) {
-    let v = parseInt(str[i]);
+    let v = parseInt(str.charAt(i), 10);
     v *= 2 - (i % 2);
     if (v > 9) {
       v -= 9;
@@ -45,10 +48,12 @@ export const luhnCheck = (str = ''): boolean => {
   return sum % 10 === 0;
 };
 
+/** @public */
 export enum OrgNumberFormat {
   DASH,
 }
 
+/** @public */
 export const formatOrgNr = (orgNr: string, format: OrgNumberFormat = OrgNumberFormat.DASH): string | undefined => {
   const orgNumber = orgNr.replace(/\D/g, '');
   if (orgNumber.length !== 10 || !luhnCheck(orgNumber)) {
