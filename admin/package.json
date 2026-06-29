@@ -4,12 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "dotenv next dev",
-    "build": "dotenv next build",
+    "build": "cross-env BROWSERSLIST_IGNORE_OLD_DATA=1 dotenv next build",
     "start": "dotenv next start",
     "generate:contracts": "cross-env NODE_ENV=development npx tsx ./src/swagger-typescript-api.ts",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
-    "lint:strict": "eslint src/ --max-warnings=0 --cache --cache-location node_modules/.cache/eslint/",
+    "lint:strict": "cross-env BROWSERSLIST_IGNORE_OLD_DATA=1 eslint src/ --max-warnings=0 --cache --cache-location node_modules/.cache/eslint/",
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx}\"",
     "type-check": "tsc --pretty --noEmit",
@@ -76,7 +76,6 @@
     "typescript": "5.9.3",
     "typescript-eslint": "^8.57.2",
     "vite": "^8.0.0",
-    "vite-tsconfig-paths": "^6",
     "vitest": "^4.1.9"
   },
   "browserslist": [

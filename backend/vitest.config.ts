@@ -1,5 +1,4 @@
 import swc from 'unplugin-swc';
-import tsconfigPaths from 'vite-tsconfig-paths';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
@@ -8,11 +7,10 @@ export default defineConfig({
   // disables the default transform, so disable Oxc explicitly and let SWC (below) own it.
   oxc: false,
   esbuild: false,
+  resolve: {
+    tsconfigPaths: true,
+  },
   plugins: [
-    // Resolve the `@/`, `@controllers/*`, … path aliases. Point at tsconfig.eslint.json
-    // because tsconfig.json excludes src/tests, which would make the plugin skip alias
-    // resolution inside the test files themselves.
-    tsconfigPaths({ projects: ['tsconfig.eslint.json'] }),
     // routing-controllers / class-validator depend on `emitDecoratorMetadata`, which esbuild
     // (Vitest's default transform) does not emit. SWC does, so we transform with it instead.
     swc.vite({

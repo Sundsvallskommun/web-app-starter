@@ -83,7 +83,6 @@
     "typescript": "5.9.3",
     "typescript-eslint": "^8.57.2",
     "unplugin-swc": "^1.5.7",
-    "vite-tsconfig-paths": "^6",
     "vitest": "^4.1.9"
   },
   "resolutions": {

@@ -38,6 +38,9 @@ module.exports = withBundleAnalyzer({
   experimental: {
     optimizePackageImports: ['@sk-web-gui'],
   },
+  turbopack: {
+    root: __dirname,
+  },
   async rewrites() {
     return [{ source: '/napi/:path*', destination: '/api/:path*' }];
   },
