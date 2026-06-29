@@ -20,8 +20,9 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "incremental": true,
+    "types": ["node", "next", "next/image-types/global", "vitest/globals", "@testing-library/jest-dom"],
     "baseUrl": ".",
     "paths": {
       "@config/*": ["src/config/*"],
@@ -38,6 +39,6 @@
       "@data-contracts/*": ["src/data-contracts/*"]
     }
   },
-  "include": ["next-env.d.ts", "node_modules/dayjs/plugin/utc.d.ts", "**/*.ts", "**/*.tsx"],
+  "include": ["node_modules/dayjs/plugin/utc.d.ts", "**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules", "vitest.config.ts", "**/*.test.jsx"]
 }

@@ -8,6 +8,9 @@ import tseslint from 'typescript-eslint';
 // eslint-config-next so the plugin instance dedupes.
 export default tseslint.config(
   {
+    linterOptions: { noInlineConfig: true, reportUnusedDisableDirectives: 'error' },
+  },
+  {
     ignores: [
       '.next/**',
       'out/**',

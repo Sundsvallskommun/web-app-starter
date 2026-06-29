@@ -9,7 +9,7 @@ Systemet utgår ifrån [api-config.ts](./backend/src/config/api-config.ts)/backe
 
 ### Krav
 
-- Node >= 22.12 (CI använder Node 24; commitlint kräver >= 22.12)
+- Node 24 (samma version som CI; se `.nvmrc`)
 - Yarn
 
 ### Steg för steg
@@ -78,11 +78,12 @@ Repot har strikta, type-aware kvalitetsgrindar. Kör hela sviten från roten med
 | `yarn type-check`   | `tsc --noEmit`, `strict` + `noUncheckedIndexedAccess`                              |
 | `yarn knip`         | Blockerar på död kod / oanvända exports / oanvända dependencies                     |
 | `yarn test`         | Vitest (backend: node/SWC, frontend & admin: jsdom + React Testing Library)        |
+| `yarn build`        | Backend build + Next-build för frontend och admin med test-env                      |
 | `yarn test:e2e`     | Playwright (frontend + admin)                                                       |
-| `yarn verify`       | Allt ovanpå (utom e2e), för alla paket                                              |
+| `yarn verify`       | Lint, format, type-check, Knip, unit tests och build för alla paket                 |
 
 Git-hooks (husky): **pre-commit** (console.log- + PII-scan + lint-staged), **commit-msg**
-(Conventional Commits), **pre-push** (lint + format + type-check + knip för alla paket).
+(Conventional Commits), **pre-push** (`yarn verify` för alla paket).
 Använd inte `--no-verify` för att kringgå dem — åtgärda grundorsaken. Se [AGENTS.md](./AGENTS.md).
 
 ### Språkstöd

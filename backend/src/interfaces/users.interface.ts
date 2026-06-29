@@ -1,4 +1,5 @@
 export interface User {
+  [key: string]: unknown;
   // personId: string;
   username: string;
   name: string;

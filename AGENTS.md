@@ -66,9 +66,11 @@ must pass — and the pre-push hook runs the full gate so failures surface local
   (`ignore` / `ignoreDependencies` / `entry`). Don't disable Knip — opt out the symbol.
 - **Tests** (`yarn test`): Vitest — backend (node, SWC for decorators), frontend & admin
   (jsdom + React Testing Library). E2E via Playwright (`yarn test:e2e`). **No Cypress, no Jest.**
+- **Build** (`yarn build`): backend `tsc && tsc-alias`, plus Next builds for frontend
+  and admin using deterministic test env values.
 - **Hooks**: pre-commit (console.log + PII scan + lint-staged), commit-msg (Conventional
-  Commits), pre-push (lint + format + type-check + knip across all packages). Don't
-  `--no-verify` to dodge them.
+  Commits), pre-push (`yarn verify`: lint + format + type-check + knip + unit tests +
+  build across all packages). Don't `--no-verify` to dodge them.
 
 Fix the root cause; do not weaken a rule or add `any`/`eslint-disable` without a written
 reason. New code should ship with a test.

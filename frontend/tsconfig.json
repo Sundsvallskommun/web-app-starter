@@ -7,10 +7,9 @@
         "name": "next"
       },
     ],
-    "types": ["node", "vitest/globals", "@testing-library/jest-dom"]
+    "types": ["node", "next", "next/image-types/global", "vitest/globals", "@testing-library/jest-dom"]
   },
   "include": [
-    "next-env.d.ts",
     "node_modules/dayjs/plugin/utc.d.ts",
     "**/*.ts",
     "**/*.tsx",

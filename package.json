@@ -2,6 +2,10 @@
   "name": "web-app-starter",
   "private": true,
   "description": "Root orchestration for the web-app-starter monorepo: git hooks, commit linting and cross-package quality gates.",
+  "engines": {
+    "node": "24.x",
+    "yarn": "1.x"
+  },
   "scripts": {
     "prepare": "husky",
     "lint": "yarn --cwd backend lint && yarn --cwd frontend lint && yarn --cwd admin lint",
@@ -12,12 +16,17 @@
     "type-check": "yarn --cwd backend type-check && yarn --cwd frontend type-check && yarn --cwd admin type-check",
     "knip": "yarn --cwd backend knip && yarn --cwd frontend knip && yarn --cwd admin knip",
     "test": "yarn --cwd backend test && yarn --cwd frontend test && yarn --cwd admin test",
+    "build:backend": "yarn --cwd backend build",
+    "build:frontend": "cross-env NEXT_PUBLIC_APP_NAME=\"Web App Starter\" NEXT_PUBLIC_API_URL=http://localhost:3001/api DOMAIN_NAME=localhost BASE_PATH= NEXT_PUBLIC_BASE_PATH= ADMIN_URL=http://localhost:3002/ NEXT_PUBLIC_PROTECTED_ROUTES= HEALTH_AUTH=false HEALTH_USERNAME= HEALTH_PASSWORD= yarn --cwd frontend build:test",
+    "build:admin": "cross-env NEXT_PUBLIC_API_URL=http://localhost:3001/api DOMAIN_NAME=localhost BASE_PATH= NEXT_PUBLIC_BASE_PATH= HEALTH_AUTH=false HEALTH_USERNAME= HEALTH_PASSWORD= yarn --cwd admin build",
+    "build": "yarn build:backend && yarn build:frontend && yarn build:admin",
     "test:e2e": "yarn --cwd frontend test:e2e && yarn --cwd admin test:e2e",
-    "verify": "yarn lint:strict && yarn format:check && yarn type-check && yarn knip && yarn test"
+    "verify": "yarn lint:strict && yarn format:check && yarn type-check && yarn knip && yarn test && yarn build"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.0.2",
     "@commitlint/config-conventional": "^21.0.2",
+    "cross-env": "^10",
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0"
   }

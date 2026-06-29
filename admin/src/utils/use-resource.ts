@@ -8,6 +8,8 @@ import { useShallow } from 'zustand/react/shallow';
 import { useCrudHelper } from './use-crud-helpers';
 import { useLocalStorage } from './use-localstorage.hook';
 
+const toResourceRows = (rows: object[]): Record<string, unknown>[] => rows.map((row) => ({ ...row }));
+
 export const useResource = (resource: ResourceName) => {
   const [resourceData, setData, setLoaded, setLoading] = useLocalStorage(
     useShallow((state) => [state.resourceData, state.setData, state.setLoaded, state.setLoading])
@@ -26,7 +28,7 @@ export const useResource = (resource: ResourceName) => {
       handleGetMany(getMany)
         .then((res) => {
           if (res) {
-            setData(resource, res);
+            setData(resource, toResourceRows(res));
             setLoaded(resource, true);
           }
           setLoading(resource, false);

@@ -6,6 +6,9 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
+    linterOptions: { noInlineConfig: true, reportUnusedDisableDirectives: 'error' },
+  },
+  {
     // Generated API clients are never hand-edited; build output and coverage are not source.
     // `*.d.ts` are ambient type augmentations; `swagger-typescript-api.ts` is a codegen script.
     ignores: ['dist/**', 'coverage/**', 'src/data-contracts/**', '**/*.d.ts', 'src/swagger-typescript-api.ts'],

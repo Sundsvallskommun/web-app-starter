@@ -11,6 +11,9 @@ import tseslint from 'typescript-eslint';
 // `typescript-eslint` dependency on the same major as eslint-config-next so they dedupe.
 export default tseslint.config(
   {
+    linterOptions: { noInlineConfig: true, reportUnusedDisableDirectives: 'error' },
+  },
+  {
     ignores: [
       '.next/**',
       'out/**',

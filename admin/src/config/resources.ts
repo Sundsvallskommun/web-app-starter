@@ -17,7 +17,7 @@ const users: Resource<User> = {
   getMany: notImplemented('users.getMany'),
   create: notImplemented('users.create'),
   update: notImplemented('users.update'),
-  remove: notImplemented('users.remove') as Resource<User>['remove'],
+  remove: notImplemented('users.remove'),
   defaultValues: {
     name: '',
   },

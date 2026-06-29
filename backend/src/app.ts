@@ -116,7 +116,7 @@ const samlStrategy = new Strategy(
 
     try {
       // const personNumber = profile.citizenIdentifier;
-      // const citizenResult = await apiService.get<any>({ url: `citizen/2.0/${personNumber}/guid` });
+      // const citizenResult = await apiService.get<CitizenGuidResponse>({ url: `citizen/2.0/${personNumber}/guid` });
       // const { data: personId } = citizenResult;
 
       // if (!personId) {
@@ -134,7 +134,7 @@ const samlStrategy = new Strategy(
         surname: surname,
       };
 
-      done(null, findUser as unknown as Record<string, unknown>);
+      done(null, findUser);
     } catch (err) {
       if (err instanceof HttpException && err.status === 404) {
         // Handle missing person form Citizen
@@ -322,7 +322,7 @@ class App {
 
         const queries = new URLSearchParams(failureRedirect.searchParams);
 
-        if (req.session.messages.length > 0) {
+        if (req.session.messages?.length) {
           queries.append('failMessage', req.session.messages[0] ?? 'SAML_UNKNOWN_ERROR');
         } else {
           queries.append('failMessage', 'SAML_UNKNOWN_ERROR');
@@ -378,6 +378,7 @@ class App {
                 failMessage.append('failMessage', 'SAML_UNKNOWN_ERROR');
                 failureRedirect.search = failMessage.toString();
                 res.redirect(failureRedirect.toString());
+                return;
               }
               res.redirect(successRedirect.toString());
             });
