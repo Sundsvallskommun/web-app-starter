@@ -30,7 +30,9 @@ export const EditAssistant: React.FC = () => {
 
   useEffect(() => {
     if (!parsedResource) {
-      void router.push('/');
+      router.push('/').catch((error: unknown) => {
+        console.error('Failed to redirect from unknown resource.', error);
+      });
     }
   }, [parsedResource, router]);
 
@@ -70,11 +72,15 @@ export const EditAssistant: React.FC = () => {
 
   useEffect(() => {
     if (id) {
-      void handleGetOne(() => getOne(id)).then((res) => {
-        reset(res);
-        setIsNew(false);
-        setLoaded(true);
-      });
+      handleGetOne(() => getOne(id))
+        .then((res) => {
+          reset(res);
+          setIsNew(false);
+          setLoaded(true);
+        })
+        .catch((error: unknown) => {
+          console.error('Failed to load resource.', error);
+        });
     } else {
       reset(defaultValues);
       setIsNew(true);
@@ -84,7 +90,11 @@ export const EditAssistant: React.FC = () => {
 
   useEffect(() => {
     if (navigate) {
-      void router.push(`/${resource}/${String((formdata?.id as string | number | undefined) ?? '')}`);
+      router
+        .push(`/${resource}/${String((formdata?.id as string | number | undefined) ?? '')}`)
+        .catch((error: unknown) => {
+          console.error('Failed to navigate to saved resource.', error);
+        });
     }
   }, [navigate]);
 
@@ -99,20 +109,28 @@ export const EditAssistant: React.FC = () => {
       create as NonNullable<Resource<FieldValues>['create']>;
     switch (isNew) {
       case true:
-        void handleCreate(() => createFunc(data)).then((res) => {
-          if (res) {
-            reset(res);
-            refresh();
-          }
-        });
+        handleCreate(() => createFunc(data))
+          .then((res) => {
+            if (res) {
+              reset(res);
+              refresh();
+            }
+          })
+          .catch((error: unknown) => {
+            console.error('Failed to create resource.', error);
+          });
 
         break;
       case false:
         if (id) {
-          void handleUpdate(() => update?.(id, data) as ResourceResponse<Partial<FieldValues>>).then((res) => {
-            reset(res);
-            refresh();
-          });
+          handleUpdate(() => update?.(id, data) as ResourceResponse<Partial<FieldValues>>)
+            .then((res) => {
+              reset(res);
+              refresh();
+            })
+            .catch((error: unknown) => {
+              console.error('Failed to update resource.', error);
+            });
         }
         break;
     }
@@ -143,7 +161,11 @@ export const EditAssistant: React.FC = () => {
         <FormProvider {...form}>
           <form
             className="flex flex-row gap-32 justify-between grow flex-wrap"
-            onSubmit={(e) => void handleSubmit(onSubmit)(e)}
+            onSubmit={(e) => {
+              handleSubmit(onSubmit)(e).catch((error: unknown) => {
+                console.error('Failed to submit resource form.', error);
+              });
+            }}
           >
             <EditorToolbar resource={resource} isDirty={isDirty} id={id} />
             <EditResource resource={resource} isNew={isNew} />

@@ -12,10 +12,14 @@ const LoginGuard: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    void getMe().finally(() => {
-      setIsLoading(false);
-    });
-  }, []);
+    getMe()
+      .finally(() => {
+        setIsLoading(false);
+      })
+      .catch((error: unknown) => {
+        console.error('Failed to load current user.', error);
+      });
+  }, [getMe]);
 
   if (isLoading || (!user.name && !router.pathname.includes('/login'))) {
     return <LoaderFullScreen />;

@@ -12,15 +12,13 @@ export interface ApiResponse<T = unknown> {
 type ApiRequestOptions = Omit<AxiosRequestConfig, 'data' | 'method' | 'url'>;
 
 const handleError = (error: unknown): never => {
-  if (!protectedRoutes.includes(window?.location.pathname)) throw error;
+  const currentPath = globalThis.location?.pathname ?? '';
+
+  if (!protectedRoutes.includes(currentPath)) throw error;
 
   //TODO: Refactor to be more compliant with NextJS routing standards
-  if (
-    axios.isAxiosError<ApiResponse>(error) &&
-    error.response?.status === 401 &&
-    !window?.location.pathname.includes('login')
-  ) {
-    window.location.href = `/login?path=${window.location.pathname}&failMessage=${error.response.data.message}`;
+  if (axios.isAxiosError<ApiResponse>(error) && error.response?.status === 401 && !currentPath.includes('login')) {
+    globalThis.location.href = `/login?path=${currentPath}&failMessage=${error.response.data.message}`;
   }
 
   throw error;

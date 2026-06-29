@@ -15,7 +15,9 @@ interface LocalizationProviderProps {
 const LocalizationProvider = memo<LocalizationProviderProps>(({ children, locale, namespaces, resources }) => {
   const i18n = createInstance();
 
-  void initLocalization(locale, namespaces, i18n, resources);
+  initLocalization(locale, namespaces, i18n, resources).catch((error: unknown) => {
+    console.error('Failed to initialize localization.', error);
+  });
 
   return <I18nextProvider {...{ i18n }}>{children}</I18nextProvider>;
 });

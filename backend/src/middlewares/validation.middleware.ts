@@ -17,15 +17,18 @@ export const validationMiddleware = (
   whitelist = true,
   forbidNonWhitelisted = true,
 ): RequestHandler => {
-  return (req, res, next) => {
-    const obj = plainToInstance(type, req[value] as object);
-    void validate(obj, { skipMissingProperties, whitelist, forbidNonWhitelisted }).then(errors => {
+  return async (req, res, next) => {
+    try {
+      const obj = plainToInstance(type, req[value] as object);
+      const errors = await validate(obj, { skipMissingProperties, whitelist, forbidNonWhitelisted });
       if (errors.length > 0) {
         const message = errors.map(getAllNestedErrors).join(', ');
         next(new HttpException(400, message));
       } else {
         next();
       }
-    });
+    } catch (error) {
+      next(error);
+    }
   };
 };

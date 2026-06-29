@@ -36,7 +36,7 @@ export function useRouteGuard(
       const confirm = await showConfirmation(title, text, confirmLabel, dismissLabel, 'info');
       if (confirm) {
         setActive(false);
-        void router.push(url);
+        await router.push(url);
       }
     };
 
@@ -49,15 +49,17 @@ export function useRouteGuard(
 
     const handleBrowseAway = (url: string) => {
       if (!active) return;
-      void confirmRouterChange(url);
+      confirmRouterChange(url).catch((error: unknown) => {
+        console.error('Failed to navigate after route guard confirmation.', error);
+      });
       router.events.emit('routeChangeError');
       throw new Error('routing cancelled. Confirm to continue.');
     };
 
-    window.addEventListener('beforeunload', handleWindowClose);
+    globalThis.addEventListener('beforeunload', handleWindowClose);
     router.events.on('routeChangeStart', handleBrowseAway);
     return () => {
-      window.removeEventListener('beforeunload', handleWindowClose);
+      globalThis.removeEventListener('beforeunload', handleWindowClose);
       router.events.off('routeChangeStart', handleBrowseAway);
     };
   }, [active, showConfirmation, text, title, confirmLabel, dismissLabel]);

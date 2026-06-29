@@ -5,7 +5,9 @@ import { useEffect } from 'react';
 export default function Index() {
   const router = useRouter();
   useEffect(() => {
-    void router.push('/start');
-  }, []);
+    router.push('/start').catch((error: unknown) => {
+      console.error('Failed to redirect to start page.', error);
+    });
+  }, [router]);
   return <LoaderFullScreen />;
 }

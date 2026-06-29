@@ -28,7 +28,9 @@ export const Exempelsida: React.FC = () => {
 
   useEffect(() => {
     if (!parsedResource) {
-      void router.push('/');
+      router.push('/').catch((error: unknown) => {
+        console.error('Failed to redirect from unknown resource.', error);
+      });
     }
   }, [parsedResource, router]);
 

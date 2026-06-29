@@ -22,33 +22,29 @@ export const EditorToolbar: React.FC<ToolbarProps> = ({ resource, isDirty, id })
   const { handleRemove } = useCrudHelper(resource);
   const confirm = useConfirm();
   const { reset } = useFormContext();
+  const { t } = useTranslation();
 
-  const onRemove = () => {
+  const onRemove = async (): Promise<void> => {
     if (remove && id) {
-      void confirm
-        .showConfirmation(
-          capitalize(t('common:remove_resource', { resource: t(`${resource}:name_one`) })),
-          capitalize(t('common:can_not_be_undone')),
-          capitalize(t('common:remove')),
-          capitalize(t('common:keep_edit')),
-          'error'
-        )
-        .then((confirmed) => {
-          if (confirmed) {
-            void handleRemove(() => remove(id) as ResourceResponse<unknown>).then((res) => {
-              if (res) {
-                reset();
-                void router.push(parentPath);
-              }
-            });
-          }
-        });
+      const confirmed = await confirm.showConfirmation(
+        capitalize(t('common:remove_resource', { resource: t(`${resource}:name_one`) })),
+        capitalize(t('common:can_not_be_undone')),
+        capitalize(t('common:remove')),
+        capitalize(t('common:keep_edit')),
+        'error'
+      );
+      if (!confirmed) return;
+
+      const res = await handleRemove(() => remove(id) as ResourceResponse<unknown>);
+      if (res) {
+        reset();
+        await router.push(parentPath);
+      }
     } else if (!id) {
-      void router.push(parentPath);
+      await router.push(parentPath);
     }
   };
 
-  const { t } = useTranslation();
   return (
     <Button.Group className="absolute top-40 right-48 w-fit">
       <Button
@@ -72,7 +68,9 @@ export const EditorToolbar: React.FC<ToolbarProps> = ({ resource, isDirty, id })
             aria-label={capitalize(t('common:remove', { resource: t(`${resource}:name_one`) }))}
             size="sm"
             onClick={() => {
-              onRemove();
+              onRemove().catch((error: unknown) => {
+                console.error('Failed to remove resource.', error);
+              });
             }}
           >
             <Icon icon={<Trash />} />

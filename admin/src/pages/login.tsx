@@ -19,7 +19,7 @@ export default function Start() {
   const [isLoading, setIsLoading] = useState(true);
   const { t } = useTranslation();
 
-  const params = new URLSearchParams(window.location.search);
+  const params = new URLSearchParams(globalThis.location?.search ?? '');
   const isLoggedOut = params.get('loggedout') === '';
   const failMessage = params.get('failMessage');
 
@@ -31,7 +31,7 @@ export default function Start() {
   };
 
   const onLogin = () => {
-    const path = router.query.path ?? new URLSearchParams(window.location.search).get('path') ?? '';
+    const path = router.query.path ?? new URLSearchParams(globalThis.location?.search ?? '').get('path') ?? '';
 
     const url = new URL(apiURL('/saml/login'));
     const queries = new URLSearchParams({
@@ -40,20 +40,24 @@ export default function Start() {
     });
     url.search = queries.toString();
     // NOTE: send user to login with SSO
-    window.location.href = url.toString();
+    globalThis.location.href = url.toString();
   };
 
   useEffect(() => {
     setInitalFocus();
     if (!router.isReady) return;
     if (isLoggedOut) {
-      void router.push(
-        {
-          pathname: '/login',
-        },
-        '/login',
-        { shallow: true }
-      );
+      router
+        .push(
+          {
+            pathname: '/login',
+          },
+          '/login',
+          { shallow: true }
+        )
+        .catch((error: unknown) => {
+          console.error('Failed to normalize login URL.', error);
+        });
       setIsLoading(false);
     } else {
       if (failMessage === 'NOT_AUTHORIZED' && autoLogin) {

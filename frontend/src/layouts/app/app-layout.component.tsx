@@ -41,7 +41,9 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
   const getMe = useUserStore((state) => state.getMe);
 
   useEffect(() => {
-    void getMe();
+    getMe().catch((error: unknown) => {
+      console.error('Failed to load current user.', error);
+    });
   }, [getMe]);
 
   return (

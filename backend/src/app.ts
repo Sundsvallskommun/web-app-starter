@@ -248,11 +248,10 @@ class App {
         next();
       },
       (req, res, next) => {
-        void (
-          passport.authenticate('saml', {
-            failureRedirect: SAML_FAILURE_REDIRECT,
-          }) as RequestHandler
-        )(req, res, next);
+        const authenticate = passport.authenticate('saml', {
+          failureRedirect: SAML_FAILURE_REDIRECT,
+        }) as RequestHandler;
+        authenticate(req, res, next);
       },
     );
 
@@ -355,36 +354,35 @@ class App {
         failureRedirect = successRedirect;
       }
 
-      void (
-        passport.authenticate('saml', (err: Error | null, user?: Express.User | false) => {
-          if (err) {
-            const queries = new URLSearchParams(failureRedirect.searchParams);
-            if (err.name) {
-              queries.append('failMessage', err.name);
-            } else {
-              queries.append('failMessage', 'SAML_UNKNOWN_ERROR');
-            }
-            failureRedirect.search = queries.toString();
-            res.redirect(failureRedirect.toString());
-          } else if (!user) {
-            const failMessage = new URLSearchParams(failureRedirect.searchParams);
-            failMessage.append('failMessage', 'NO_USER');
-            failureRedirect.search = failMessage.toString();
-            res.redirect(failureRedirect.toString());
+      const authenticate = passport.authenticate('saml', (err: Error | null, user?: Express.User | false) => {
+        if (err) {
+          const queries = new URLSearchParams(failureRedirect.searchParams);
+          if (err.name) {
+            queries.append('failMessage', err.name);
           } else {
-            req.login(user, loginErr => {
-              if (loginErr) {
-                const failMessage = new URLSearchParams(failureRedirect.searchParams);
-                failMessage.append('failMessage', 'SAML_UNKNOWN_ERROR');
-                failureRedirect.search = failMessage.toString();
-                res.redirect(failureRedirect.toString());
-                return;
-              }
-              res.redirect(successRedirect.toString());
-            });
+            queries.append('failMessage', 'SAML_UNKNOWN_ERROR');
           }
-        }) as RequestHandler
-      )(req, res, next);
+          failureRedirect.search = queries.toString();
+          res.redirect(failureRedirect.toString());
+        } else if (!user) {
+          const failMessage = new URLSearchParams(failureRedirect.searchParams);
+          failMessage.append('failMessage', 'NO_USER');
+          failureRedirect.search = failMessage.toString();
+          res.redirect(failureRedirect.toString());
+        } else {
+          req.login(user, loginErr => {
+            if (loginErr) {
+              const failMessage = new URLSearchParams(failureRedirect.searchParams);
+              failMessage.append('failMessage', 'SAML_UNKNOWN_ERROR');
+              failureRedirect.search = failMessage.toString();
+              res.redirect(failureRedirect.toString());
+              return;
+            }
+            res.redirect(successRedirect.toString());
+          });
+        }
+      }) as RequestHandler;
+      authenticate(req, res, next);
     });
   }
 
