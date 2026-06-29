@@ -74,3 +74,32 @@ must pass — and the pre-push hook runs the full gate so failures surface local
 
 Fix the root cause; do not weaken a rule or add `any`/`eslint-disable` without a written
 reason. New code should ship with a test.
+
+## Dependency upgrades — intentional pins & deferrals
+
+Keep deps current, but a few majors are **deliberately held back**. Before "upgrading"
+one of these, confirm the blocker below has actually cleared — don't rediscover it:
+
+- **Tailwind CSS → stay on v3** (`tailwindcss ^3.4.x`, frontend + admin). `@sk-web-gui/core`
+  ships a **v3 JS preset** (`preset()`, consumed in `tailwind.config.js`) — an API Tailwind 4
+  removed. v4 installs but breaks sk-web-gui theming/utilities. Move only once the design
+  system ships a v4-compatible release.
+- **ESLint → stay on v9 in frontend + admin** (`eslint ^9`). `eslint-config-next 16` bundles
+  `eslint-plugin-import` / `-react` / `-jsx-a11y` that still cap ESLint at `^9`. Backend has no
+  `eslint-config-next` and runs **ESLint 10**. Re-align frontend/admin once Next bumps those plugins.
+- **`typescript-eslint` → exact `8.61.0` in frontend + admin** (no caret). Must match the version
+  `eslint-config-next 16` resolves so the `@typescript-eslint` plugin dedupes to a single instance
+  (otherwise: *"Cannot redefine plugin @typescript-eslint"*). Backend floats (`^8.62.0`). See the
+  note in each `eslint.config.mjs`.
+- **`class-validator` → stay on `^0.14`** (backend). `routing-controllers@0.11.3` (peer `^0.14.1`)
+  and `class-validator-jsonschema@5.1.0` (peer `^0.14.0`) exclude `0.15`. Bump all three together
+  once those consumers ship `0.15`-compatible peers.
+- **`@types/node` → stay on `^24`** (all packages). Types track the Node 24 runtime
+  (`engines.node`, `.nvmrc`); leading them to 26 lets `tsc` green-light APIs absent at runtime.
+- **TypeScript 6** (all packages) sits under the `<6.1.0` ceiling allowed by `typescript-eslint`.
+  `baseUrl` is gone (path-map targets are `./`-relative); backend uses `moduleResolution: nodenext`
+  with an explicit `rootDir: src`.
+
+**Node:** install/build on **Node 24** (`.nvmrc`) — `lint-staged 17` requires `>=22.22.1`.
+`vite` stays at the locked `8.0.x` (range `^8` already allows 8.1; a `yarn upgrade vite` trips a
+yarn-1 nested-link bug via vitest's optional peer, so let it float on the next clean lockfile regen).

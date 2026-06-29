@@ -4,7 +4,7 @@ import simpleImportSort from 'eslint-plugin-simple-import-sort';
 import unusedImports from 'eslint-plugin-unused-imports';
 import tseslint from 'typescript-eslint';
 
-// See frontend/eslint.config.mjs for the note on sharing typescript-eslint with
+// See frontend/eslint.config.mjs for the note on aligning typescript-eslint with
 // eslint-config-next so the plugin instance dedupes.
 export default tseslint.config(
   {

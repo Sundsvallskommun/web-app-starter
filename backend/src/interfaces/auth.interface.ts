@@ -18,6 +18,6 @@ export type InternalRole = 'app_admin' | 'app_read';
 
 /** @public */
 export enum InternalRoleEnum {
-  'app_read',
-  'app_admin',
+  app_read,
+  app_admin,
 }

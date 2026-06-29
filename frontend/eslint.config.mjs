@@ -8,7 +8,7 @@ import tseslint from 'typescript-eslint';
 // from the hoisted top-level install (no nested copy), so spreading
 // tseslint.configs.strictTypeChecked here reuses the SAME plugin instance Next registers —
 // no "Cannot redefine plugin @typescript-eslint" collision. Keep frontend's
-// `typescript-eslint` dependency on the same major as eslint-config-next so they dedupe.
+// `typescript-eslint` dependency aligned with eslint-config-next's version so they dedupe.
 export default tseslint.config(
   {
     linterOptions: { noInlineConfig: true, reportUnusedDisableDirectives: 'error' },

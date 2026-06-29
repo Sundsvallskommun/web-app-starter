@@ -22,20 +22,19 @@
     "isolatedModules": true,
     "jsx": "react-jsx",
     "incremental": true,
-    "baseUrl": "./",
     "paths": {
-      "@app/*": ["src/app/*"],
-      "@services/*": ["src/services/*"],
-      "@components/*": ["src/components/*"],
-      "@interfaces/*": ["src/interfaces/*"],
-      "@contexts/*": ["src/contexts/*"],
-      "@hooks/*": ["src/hooks/*"],
-      "@layouts/*": ["src/layouts/*"],
-      "@styles/*": ["src/styles/*"],
-      "@utils/*": ["src/utils/*"],
-      "@middlewares/*": ["src/utils/middlewares/*"],
-      "@public/*": ["public/*"],
-      "@data-contracts/*": ["src/data-contracts/*"]
+      "@app/*": ["./src/app/*"],
+      "@services/*": ["./src/services/*"],
+      "@components/*": ["./src/components/*"],
+      "@interfaces/*": ["./src/interfaces/*"],
+      "@contexts/*": ["./src/contexts/*"],
+      "@hooks/*": ["./src/hooks/*"],
+      "@layouts/*": ["./src/layouts/*"],
+      "@styles/*": ["./src/styles/*"],
+      "@utils/*": ["./src/utils/*"],
+      "@middlewares/*": ["./src/utils/middlewares/*"],
+      "@public/*": ["./public/*"],
+      "@data-contracts/*": ["./src/data-contracts/*"]
     }
   }
 }

@@ -83,9 +83,7 @@ export const EditResourceArray: React.FC<EditResourceArrayProps> = ({
     .reduce<FieldError | Merge<FieldError, FieldErrorsImpl<DataType>> | undefined>((errorpart, key) => {
       if (errorpart && typeof errorpart === 'object' && !Array.isArray(errorpart) && key in errorpart) {
         return (errorpart as Record<string, unknown>)[key] as
-          | FieldError
-          | Merge<FieldError, FieldErrorsImpl<DataType>>
-          | undefined;
+          FieldError | Merge<FieldError, FieldErrorsImpl<DataType>> | undefined;
       }
 
       return errors?.[key];
