@@ -2,5 +2,9 @@
   "/login": {
     "title": "Inloggningssida",
     "description": "Beskrivning utav inloggningssidan"
+  },
+  "/example": {
+    "title": "Exempelsida",
+    "description": "Starter-exempel för layout och grundflöden"
   }
 }

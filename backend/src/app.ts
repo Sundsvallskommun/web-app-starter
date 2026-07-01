@@ -59,9 +59,6 @@ const sessionTTL = 4 * 24 * 60 * 60;
 // NOTE: memory uses ms while file uses seconds
 const sessionStore = new SessionStoreCreate(SESSION_MEMORY ? { checkPeriod: sessionTTL * 1000 } : { sessionTTL, path: './data/sessions' });
 
-// const prisma = new PrismaClient();
-// const apiService = new ApiService();
-
 passport.serializeUser(function (user, done) {
   done(null, user);
 });
