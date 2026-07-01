@@ -1,6 +1,10 @@
 # compiled output
 .vscode
 /node_modules
+/dist
+
+# local runtime data (sessions/logs/database)
+/data
 
 # code formatter
 .eslintrc

@@ -16,7 +16,6 @@ import {
   SAML_PUBLIC_KEY,
   SAML_SUCCESS_REDIRECT,
   SECRET_KEY,
-  SESSION_MEMORY,
   SWAGGER_ENABLED,
 } from '@config';
 import errorMiddleware from '@middlewares/error.middleware';
@@ -33,14 +32,12 @@ import session from 'express-session';
 import { existsSync, mkdirSync } from 'fs';
 import helmet from 'helmet';
 import hpp from 'hpp';
-import createMemoryStore from 'memorystore';
 import morgan from 'morgan';
 import passport from 'passport';
 import { join } from 'path';
 import 'reflect-metadata';
 import { getMetadataArgsStorage, useExpressServer } from 'routing-controllers';
 import { routingControllersToSpec } from 'routing-controllers-openapi';
-import createFileStore from 'session-file-store';
 import swaggerUi from 'swagger-ui-express';
 import { HttpException } from './exceptions/HttpException';
 import { Profile } from './interfaces/profile.interface';
@@ -50,11 +47,6 @@ import { isValidOrigin } from './utils/isValidOrigin';
 import { isValidUrl } from './utils/util';
 
 const corsWhitelist = ORIGIN.split(',');
-
-const SessionStoreCreate = SESSION_MEMORY ? createMemoryStore(session) : createFileStore(session);
-const sessionTTL = 4 * 24 * 60 * 60;
-// NOTE: memory uses ms while file uses seconds
-const sessionStore = new SessionStoreCreate(SESSION_MEMORY ? { checkPeriod: sessionTTL * 1000 } : { sessionTTL, path: './data/sessions' });
 
 // const prisma = new PrismaClient();
 // const apiService = new ApiService();
@@ -148,7 +140,10 @@ class App {
   public port: string | number;
   public swaggerEnabled: boolean;
 
-  constructor(Controllers: Function[]) {
+  constructor(
+    Controllers: Function[],
+    private readonly sessionStore: session.Store,
+  ) {
     this.app = express();
     this.env = NODE_ENV || 'development';
     this.port = PORT || 3000;
@@ -191,7 +186,7 @@ class App {
         secret: SECRET_KEY,
         resave: false,
         saveUninitialized: false,
-        store: sessionStore,
+        store: this.sessionStore,
       }),
     );
 
@@ -400,10 +395,6 @@ class App {
   }
 
   private initializeDataFolders() {
-    const databaseDir: string = join(__dirname, '../data/database');
-    if (!existsSync(databaseDir)) {
-      mkdirSync(databaseDir, { recursive: true });
-    }
     const logsDir: string = join(__dirname, '../data/logs');
     if (!existsSync(logsDir)) {
       mkdirSync(logsDir, { recursive: true });
