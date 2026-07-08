@@ -183,6 +183,8 @@ class App {
   }
 
   private initializeMiddlewares() {
+    // Trust the nearest reverse proxy so req.ip and rate limiting use the client address.
+    this.app.set('trust proxy', 1);
     this.app.use(morgan(LOG_FORMAT, { stream }));
     // Baseline rate limiting for every route (auth flows, swagger, proxied APIs). Tune per
     // deployment; deployments behind a gateway may also rate-limit at the edge.

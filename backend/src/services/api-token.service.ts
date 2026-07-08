@@ -11,6 +11,22 @@ interface Token {
   expires_in: number;
 }
 
+function isToken(value: unknown): value is Token {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const token = value as Record<string, unknown>;
+
+  return (
+    typeof token.access_token === 'string' &&
+    token.access_token.length > 0 &&
+    typeof token.expires_in === 'number' &&
+    Number.isFinite(token.expires_in) &&
+    token.expires_in > 0
+  );
+}
+
 // NOTE: save token in memory only for now
 let c_access_token = '';
 let c_token_expires = 0;
@@ -38,7 +54,7 @@ class ApiTokenService {
     const authString = Buffer.from(`${CLIENT_KEY}:${CLIENT_SECRET}`, 'utf-8').toString('base64');
 
     try {
-      const { data: token } = await axios<Token>({
+      const { data } = await axios<unknown>({
         timeout: 30000, // NOTE: milliseconds
         method: 'POST',
         headers: {
@@ -51,7 +67,9 @@ class ApiTokenService {
         url: `${API_BASE_URL}/token`,
       });
 
-      this.setToken(token);
+      if (!isToken(data)) throw new HttpException(502, 'Bad Gateway');
+
+      this.setToken(data);
 
       return await this.getToken();
     } catch (error) {
