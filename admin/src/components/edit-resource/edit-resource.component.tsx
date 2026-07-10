@@ -1,14 +1,15 @@
 import { defaultInformationFields } from '@config/defaults';
 import resources from '@config/resources';
+import { Resource } from '@interfaces/resource';
+import { ResourceName } from '@interfaces/resource-name';
 import { Fragment } from 'react';
 import { FieldValues, useFormContext } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { capitalize } from 'underscore.string';
+
 import { EditResourceArray } from './edit-resource-array.component';
 import { EditResourceInput } from './edit-resource-input.component';
 import { EditResourceObject } from './edit-resource-object.component';
-import { ResourceName } from '@interfaces/resource-name';
-import { Resource } from '@interfaces/resource';
 
 interface EditResourceProps {
   resource: ResourceName;
@@ -19,12 +20,10 @@ export const EditResource: React.FC<EditResourceProps> = ({ resource }) => {
   const { t } = useTranslation();
   const { requiredFields } = resources[resource];
 
-  type CreateType = Parameters<NonNullable<Resource<FieldValues>['create']>>[0];
-  type UpdateType = Parameters<NonNullable<Resource<FieldValues>['update']>>[1];
-  type DataType = CreateType | UpdateType;
+  type DataType = Parameters<NonNullable<Resource<FieldValues>['create']>>[0];
 
   const { watch } = useFormContext<DataType>();
-  const formdata = watch() as DataType;
+  const formdata = watch();
 
   return (
     <>
@@ -56,6 +55,7 @@ export const EditResource: React.FC<EditResourceProps> = ({ resource }) => {
                   <EditResourceArray key={`res-${index}`} resource={resource} property={key} />
                 : <EditResourceObject key={`res-${index}`} resource={resource} property={key} />;
             }
+            return null;
           })}
       </div>
     </>

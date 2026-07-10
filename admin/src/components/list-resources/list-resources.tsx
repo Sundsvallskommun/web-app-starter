@@ -14,7 +14,7 @@ import { useShallow } from 'zustand/react/shallow';
 interface ListResourcesProps {
   resource: ResourceName;
   headers?: AutoTableHeader[];
-  data?: Array<Record<string, unknown>>;
+  data?: Record<string, unknown>[];
 }
 
 export const ListResources: React.FC<ListResourcesProps> = ({ resource, headers: _headers, data }) => {
@@ -26,19 +26,19 @@ export const ListResources: React.FC<ListResourcesProps> = ({ resource, headers:
 
   useEffect(() => {
     if (!storeHeaders && data) {
+      const firstRow = data[0];
       setHeaders({
         [resource]: [
-          ...(defaultInformationFields || ['id']),
-          ...(data?.[0] ? Object.keys(data[0]).filter((field) => typeof data[0][field] !== 'object') : []),
+          ...(defaultInformationFields ?? ['id']),
+          ...(firstRow ? Object.keys(firstRow).filter((field) => typeof firstRow[field] !== 'object') : []),
         ],
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storeHeaders, data]);
 
   const headers = useMemo(
     () =>
-      _headers ||
+      _headers ??
       storeHeaders?.reduce<AutoTableHeader[]>((headers, key) => {
         if (data) {
           const type = typeof data?.[0]?.[key];
@@ -84,7 +84,7 @@ export const ListResources: React.FC<ListResourcesProps> = ({ resource, headers:
           return headers;
         }
       }, []),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     [storeHeaders, _headers, data]
   );
 
@@ -104,14 +104,14 @@ export const ListResources: React.FC<ListResourcesProps> = ({ resource, headers:
   };
 
   const translatedHeaders: AutoTableHeader[] =
-    headers?.map((header) =>
-      typeof header === 'object' ?
-        { ...header, label: header?.label || capitalize(t(`${resource}:properties.${header}`)) }
-      : {
-          label: t(`${resource}:properties.${header}`, { defaultValue: header }),
-          property: header,
-        }
-    ) || [];
+    headers?.map((header) => {
+      if (typeof header === 'object') {
+        const key = 'property' in header ? String(header.property) : '';
+        return { ...header, label: header.label ?? capitalize(t(`${resource}:properties.${key}`)) };
+      }
+      const headerKey = String(header);
+      return { label: t(`${resource}:properties.${headerKey}`, { defaultValue: headerKey }), property: headerKey };
+    }) ?? [];
 
   const formattedData = useMemo(() => data?.map((row) => getFormattedFields(row)), [data]);
 

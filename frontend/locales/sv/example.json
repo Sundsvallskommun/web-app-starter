@@ -1,5 +1,11 @@
 {
   "title": "Exempelsida",
-  "description": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem.",
-  "welcome": "välkommen"
+  "description": "En liten startyta som visar en vanlig sida med layout, översättningar, användarstate och primära åtgärder.",
+  "layout_heading": "Layout och tillgänglighet",
+  "layout_body": "Sidan använder starter-mallens DefaultLayout, Main och hoppa-till-innehåll-länk så nya appar får ett tydligt första exempel.",
+  "state_heading": "Användarstate",
+  "state_body": "Aktuell användare: {{name}}",
+  "anonymous_user": "inte inläst",
+  "primary_action": "Gå till inloggning",
+  "secondary_action": "Gå till utloggning"
 }

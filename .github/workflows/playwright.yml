@@ -1,0 +1,71 @@
+name: Playwright
+
+on:
+  pull_request:
+  push:
+    branches:
+      - develop
+      - main
+
+jobs:
+  e2e-frontend:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    name: E2E Frontend (Playwright)
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: yarn
+          cache-dependency-path: frontend/yarn.lock
+      - name: Install dependencies
+        run: yarn --frozen-lockfile --silent
+      - name: Install Playwright browser (chromium)
+        run: yarn playwright install --with-deps chromium
+      - name: Run Playwright tests
+        run: yarn test:e2e
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report-frontend
+          path: frontend/playwright-report
+          retention-days: 30
+
+  e2e-admin:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: admin
+    name: E2E Admin (Playwright)
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: yarn
+          cache-dependency-path: admin/yarn.lock
+      - name: Install dependencies
+        run: yarn --frozen-lockfile --silent
+      - name: Install Playwright browser (chromium)
+        run: yarn playwright install --with-deps chromium
+      - name: Run Playwright tests
+        run: yarn test:e2e
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report-admin
+          path: admin/playwright-report
+          retention-days: 30

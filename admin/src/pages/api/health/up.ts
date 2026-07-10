@@ -1,5 +1,5 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
 import { apiService } from '@services/api-service';
+import type { NextApiRequest, NextApiResponse } from 'next';
 
 const requireAuth = process.env.HEALTH_AUTH === 'true';
 const authUsername = process.env.HEALTH_USERNAME;

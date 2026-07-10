@@ -1,8 +1,10 @@
-import App from '@/app';
 import { IndexController } from '@controllers/index.controller';
 import validateEnv from '@utils/validateEnv';
-import { UserController } from './controllers/user.controller';
+
+import App from '@/app';
+
 import { HealthController } from './controllers/health.controller';
+import { UserController } from './controllers/user.controller';
 
 validateEnv();
 

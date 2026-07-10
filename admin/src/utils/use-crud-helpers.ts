@@ -11,10 +11,11 @@ export const useCrudHelper = (resource: string) => {
     const name = t(`${resource}:name_one`);
     try {
       const result = await getOne();
-      return Promise.resolve(result.data.data);
+      return result.data.data;
     } catch {
       message({ message: capitalize(t('crud:get_one.error', { resource: name })), status: 'error' });
     }
+    return undefined;
   };
 
   const handleGetMany = async <TData = unknown>(
@@ -23,10 +24,11 @@ export const useCrudHelper = (resource: string) => {
     const name = t(`${resource}:name_many`);
     try {
       const result = await getMany();
-      return Promise.resolve(result.data.data);
+      return result.data.data;
     } catch {
       message({ message: capitalize(t('crud:get_one.error', { resource: name })), status: 'error' });
     }
+    return undefined;
   };
 
   const handleCreate = async <TData = unknown>(create: () => ResourceResponse<TData>): Promise<TData | undefined> => {
@@ -35,11 +37,12 @@ export const useCrudHelper = (resource: string) => {
       const result = await create();
       if (result) {
         message({ message: capitalize(t('crud:create.success', { resource: name })), status: 'success' });
-        return Promise.resolve(result.data.data);
+        return result.data.data;
       }
     } catch {
       message({ message: t('crud:create.error', { resource: name }), status: 'error' });
     }
+    return undefined;
   };
 
   const handleUpdate = async <TData = unknown>(update: () => ResourceResponse<TData>): Promise<TData | undefined> => {
@@ -48,11 +51,12 @@ export const useCrudHelper = (resource: string) => {
       const result = await update();
       if (result) {
         message({ message: capitalize(t('crud:update.success', { resource: name })), status: 'success' });
-        return Promise.resolve(result.data.data);
+        return result.data.data;
       }
     } catch {
       message({ message: capitalize(t('crud:update.error', { resource: name })), status: 'error' });
     }
+    return undefined;
   };
 
   const handleRemove = async <TData = unknown>(remove: () => ResourceResponse<TData>): Promise<TData | undefined> => {
@@ -61,11 +65,12 @@ export const useCrudHelper = (resource: string) => {
       const result = await remove();
       if (result) {
         message({ message: capitalize(t('crud:remove.success', { resource: name })), status: 'success' });
-        return Promise.resolve(result.data.data);
+        return result.data.data;
       }
     } catch {
       message({ message: capitalize(t('crud:remove.error', { resource: name })), status: 'error' });
     }
+    return undefined;
   };
 
   return { handleGetOne, handleGetMany, handleCreate, handleUpdate, handleRemove };

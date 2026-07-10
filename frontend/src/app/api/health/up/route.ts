@@ -1,5 +1,4 @@
 import axios from 'axios';
-import https from 'https';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 
@@ -17,18 +16,15 @@ export const GET = async () => {
   }
 
   try {
-    const agent = new https.Agent({
-      rejectUnauthorized: false,
-    });
-    const health = await axios
-      .get(`${process.env.NEXT_PUBLIC_API_URL}/health/up`, { httpsAgent: agent })
-      .then((res) => res.data);
+    // TLS certificates are validated by default. For a self-signed backend in local dev,
+    // start Node with NODE_TLS_REJECT_UNAUTHORIZED=0 rather than disabling it in code.
+    const health = await axios.get<unknown>(`${process.env.NEXT_PUBLIC_API_URL}/health/up`).then((res) => res.data);
 
     return new NextResponse(JSON.stringify(health), { status: 200 });
   } catch (error) {
     return new NextResponse(
       JSON.stringify({
-        error: (error as object).toString(),
+        error: error instanceof Error ? error.message : String(error),
         status: 'ERROR!',
       }),
       { status: 500 }
