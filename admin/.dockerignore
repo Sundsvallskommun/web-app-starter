@@ -1,7 +1,16 @@
-Dockerfile
-.dockerignore
-node_modules
-npm-debug.log
-README.md
-.next
+# Version control and local configuration
 .git
+.env*
+
+# Dependencies, generated output, and local artifacts
+node_modules
+.next
+coverage
+playwright-report
+test-results
+*.log
+
+# Docker metadata is not part of the application image
+.dockerignore
+Dockerfile
+docker-compose*.yml

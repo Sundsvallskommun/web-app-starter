@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import router from 'next/router';
 import { useConfirm } from '@sk-web-gui/react';
+import router from 'next/router';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 export function useRouteGuard(
@@ -21,10 +21,10 @@ export function useRouteGuard(
 } {
   const { t } = useTranslation();
   const [active, setActive] = useState<boolean>(false);
-  const title = options?.warningTitle || t('common:unsaved_changes');
-  const text = options?.warningText || t('common:do_you_want_to_leave');
-  const confirmLabel = options?.confirmLabel || undefined;
-  const dismissLabel = options?.dismissLabel || undefined;
+  const title = options?.warningTitle ?? t('common:unsaved_changes');
+  const text = options?.warningText ?? t('common:do_you_want_to_leave');
+  const confirmLabel = options?.confirmLabel;
+  const dismissLabel = options?.dismissLabel;
   const { showConfirmation } = useConfirm();
 
   useEffect(() => {
@@ -36,27 +36,30 @@ export function useRouteGuard(
       const confirm = await showConfirmation(title, text, confirmLabel, dismissLabel, 'info');
       if (confirm) {
         setActive(false);
-        router.push(url);
+        await router.push(url);
       }
     };
 
     const handleWindowClose = (e: BeforeUnloadEvent) => {
       if (!active) return;
+      // Modern browsers show the native "leave site?" prompt on preventDefault alone;
+      // the legacy `e.returnValue` assignment is deprecated.
       e.preventDefault();
-      return (e.returnValue = `${title} ${text}`);
     };
 
     const handleBrowseAway = (url: string) => {
       if (!active) return;
-      confirmRouterChange(url);
+      confirmRouterChange(url).catch((error: unknown) => {
+        console.error('Failed to navigate after route guard confirmation.', error);
+      });
       router.events.emit('routeChangeError');
-      throw 'routing cancelled. Confirm to continue.';
+      throw new Error('routing cancelled. Confirm to continue.');
     };
 
-    window.addEventListener('beforeunload', handleWindowClose);
+    globalThis.addEventListener('beforeunload', handleWindowClose);
     router.events.on('routeChangeStart', handleBrowseAway);
     return () => {
-      window.removeEventListener('beforeunload', handleWindowClose);
+      globalThis.removeEventListener('beforeunload', handleWindowClose);
       router.events.off('routeChangeStart', handleBrowseAway);
     };
   }, [active, showConfirmation, text, title, confirmLabel, dismissLabel]);

@@ -1,8 +1,10 @@
 import 'dotenv';
-import { createJSONStorage, persist } from 'zustand/middleware';
-import { create } from 'zustand';
-import { LocalStorage } from '../interfaces/localstorage';
+
 import { ColorSchemeMode } from '@sk-web-gui/react';
+import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
+
+import { LocalStorage } from '../interfaces/localstorage';
 
 const newResource = {
   data: [],

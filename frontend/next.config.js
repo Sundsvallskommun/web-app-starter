@@ -28,6 +28,9 @@ module.exports = {
   experimental: {
     optimizePackageImports: ['@sk-web-gui/core', '@sk-web-gui/react', 'lodash', 'dayjs'],
   },
+  turbopack: {
+    root: __dirname,
+  },
   async rewrites() {
     return [{ source: '/napi/:path*', destination: '/api/:path*' }];
   },

@@ -1,38 +1,51 @@
-import { exec } from 'child_process';
-import path from 'path';
+import { execFile } from 'node:child_process';
 import fs from 'node:fs';
+import path from 'node:path';
+import { promisify } from 'node:util';
 
 import { APIS, API_BASE_URL } from './config/index';
 
+const execFileAsync = promisify(execFile);
+
 const PATH_TO_OUTPUT_DIR = path.resolve(process.cwd(), './src/data-contracts');
 
-const stdout = (error, stdout, stderr) => {
-  if (error) {
-    console.log(`error: ${error.message}`);
-    return;
-  }
-  if (stderr) {
-    console.log(`stderr: ${stderr}`);
-    return;
-  }
-  console.log(`Data-contract-generator: ${stdout}`);
-};
-
 const main = async () => {
-  console.log('Downloading and generating api-docs..');
-  APIS.forEach(async api => {
-    if (!fs.existsSync(`${PATH_TO_OUTPUT_DIR}/${api.name}`)) {
-      fs.mkdirSync(`${PATH_TO_OUTPUT_DIR}/${api.name}`, { recursive: true });
+  console.warn('Downloading and generating api-docs..');
+
+  // execFile runs each binary directly (no shell), so the API base URL and path segments
+  // interpolated into the arguments below are passed literally and can never be interpreted
+  // as shell commands.
+  for (const api of APIS) {
+    const apiDir = path.join(PATH_TO_OUTPUT_DIR, api.name);
+    const swaggerPath = path.join(apiDir, 'swagger.json');
+
+    if (!fs.existsSync(apiDir)) {
+      fs.mkdirSync(apiDir, { recursive: true });
     }
 
-    await exec(`curl -o ${PATH_TO_OUTPUT_DIR}/${api.name}/swagger.json ${API_BASE_URL}/${api.name}/${api.version}/api-docs`, () =>
-      console.log(`- ${api.name} ${api.version}`),
-    );
-    await exec(
-      `npx swagger-typescript-api --modular -p ${PATH_TO_OUTPUT_DIR}/${api.name}/swagger.json -o ${PATH_TO_OUTPUT_DIR}/${api.name} --no-client --clean-output --extract-enums`,
-      stdout,
-    );
-  });
+    try {
+      await execFileAsync('curl', ['-o', swaggerPath, `${API_BASE_URL}/${api.name}/${api.version}/api-docs`]);
+      console.warn(`- ${api.name} ${api.version}`);
+
+      const { stdout, stderr } = await execFileAsync('npx', [
+        'swagger-typescript-api',
+        '--modular',
+        '-p',
+        swaggerPath,
+        '-o',
+        apiDir,
+        '--no-client',
+        '--clean-output',
+        '--extract-enums',
+      ]);
+      if (stderr) {
+        console.error(`stderr: ${stderr}`);
+      }
+      console.warn(`Data-contract-generator: ${stdout}`);
+    } catch (error) {
+      console.error(`error: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
 };
 
 main();

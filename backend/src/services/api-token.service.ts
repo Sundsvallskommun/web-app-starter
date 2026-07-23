@@ -1,107 +1,260 @@
-import { CLIENT_KEY, CLIENT_SECRET } from '@config';
-import { HttpException } from '@/exceptions/HttpException';
+import { randomUUID } from 'node:crypto';
+
+import { CLIENT_KEY, CLIENT_SECRET, REDIS_CONFIG } from '@config';
 import { logger } from '@utils/logger';
 import { getRedisClient } from '@utils/redis';
 import { apiURL } from '@utils/util';
 import axios from 'axios';
 import qs from 'qs';
 
-export interface Token {
+import { HttpException } from '@/exceptions/HttpException';
+
+interface Token {
   access_token: string;
   expires_in: number;
 }
 
-const REDIS_TOKEN_KEY = 'wso2:access_token';
-const REDIS_EXPIRES_KEY = 'wso2:token_expires';
-const REDIS_LOCK_KEY = 'wso2:token_lock';
-const LOCK_TTL_SECONDS = 10;
-const LOCK_WAIT_MS = 500;
-const LOCK_MAX_RETRIES = 5;
+interface CachedToken {
+  accessToken: string;
+  expiresAt: number;
+}
 
-// In-memory fallback only for local dev (no REDIS_HOST)
-let localAccessToken = '';
-let localTokenExpires = 0;
+interface RedisTokenKeys {
+  lock: string;
+  token: string;
+}
+
+type RedisClient = NonNullable<Awaited<ReturnType<typeof getRedisClient>>>;
+
+const TOKEN_REFRESH_MARGIN_MS = 10_000;
+const TOKEN_REQUEST_TIMEOUT_MS = 30_000;
+const LOCK_TTL_MS = TOKEN_REQUEST_TIMEOUT_MS + 10_000;
+const LOCK_WAIT_TIMEOUT_MS = LOCK_TTL_MS + 5_000;
+const LOCK_RETRY_INITIAL_MS = 100;
+const LOCK_RETRY_MAX_MS = 1_000;
+const LOCK_RETRY_JITTER_FACTOR = 0.25;
+
+const RELEASE_LOCK_SCRIPT = `
+if redis.call("GET", KEYS[1]) == ARGV[1] then
+  return redis.call("DEL", KEYS[1])
+end
+return 0
+`;
+
+let localCachedToken: CachedToken | null = null;
+let localTokenRequest: Promise<string> | null = null;
+
+function isToken(value: unknown): value is Token {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'access_token' in value &&
+    typeof value.access_token === 'string' &&
+    value.access_token.length > 0 &&
+    'expires_in' in value &&
+    typeof value.expires_in === 'number' &&
+    Number.isFinite(value.expires_in) &&
+    value.expires_in > 0
+  );
+}
+
+function isCachedToken(value: unknown): value is CachedToken {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'accessToken' in value &&
+    typeof value.accessToken === 'string' &&
+    value.accessToken.length > 0 &&
+    'expiresAt' in value &&
+    typeof value.expiresAt === 'number' &&
+    Number.isFinite(value.expiresAt)
+  );
+}
+
+function getCacheLifetimeMs(expiresInSeconds: number): number {
+  const tokenLifetimeMs = Math.max(1, Math.floor(expiresInSeconds * 1_000));
+  const refreshMarginMs = Math.min(TOKEN_REFRESH_MARGIN_MS, Math.floor(tokenLifetimeMs * 0.1));
+
+  return Math.max(1, tokenLifetimeMs - refreshMarginMs);
+}
+
+function getRetryDelayMs(attempt: number): number {
+  const exponentialDelayMs = Math.min(LOCK_RETRY_INITIAL_MS * 2 ** attempt, LOCK_RETRY_MAX_MS);
+  const jitterMs = exponentialDelayMs * LOCK_RETRY_JITTER_FACTOR * Math.random();
+
+  return Math.floor(exponentialDelayMs + jitterMs);
+}
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : 'Unknown error';
+}
+
+function createRedisTokenKeys(): RedisTokenKeys {
+  if (!REDIS_CONFIG.enabled) {
+    throw new Error('Redis token keys cannot be created without Redis configuration');
+  }
+
+  const namespace = `${REDIS_CONFIG.keyPrefix}:wso2`;
+  return {
+    lock: `${namespace}:token_lock`,
+    token: `${namespace}:access_token`,
+  };
+}
 
 class ApiTokenService {
   public async getToken(): Promise<string> {
     const redis = await getRedisClient();
 
     if (redis) {
-      return this.getTokenFromRedis(redis);
+      return await this.getTokenFromRedis(redis, createRedisTokenKeys());
     }
 
-    // Local dev fallback (no Redis)
-    if (Date.now() < localTokenExpires && localAccessToken) {
-      return localAccessToken;
-    }
-
-    return this.fetchTokenLocal();
+    return await this.getTokenFromMemory();
   }
 
-  private async getTokenFromRedis(redis: Awaited<ReturnType<typeof getRedisClient>> & {}): Promise<string> {
-    const [token, expires] = await Promise.all([redis.get(REDIS_TOKEN_KEY), redis.get(REDIS_EXPIRES_KEY)]);
-
-    if (token && expires && Date.now() < Number(expires)) {
-      return token as string;
+  private async getTokenFromRedis(redis: RedisClient, keys: RedisTokenKeys): Promise<string> {
+    const cachedToken = await this.readCachedToken(redis, keys.token);
+    if (cachedToken) {
+      return cachedToken;
     }
 
-    // Try to acquire lock so only one pod fetches a new token
-    const acquired = await redis.set(REDIS_LOCK_KEY, '1', { NX: true, EX: LOCK_TTL_SECONDS });
+    const lockOwner = randomUUID();
+    const waitDeadline = Date.now() + LOCK_WAIT_TIMEOUT_MS;
+    let attempt = 0;
+    let hasLoggedContention = false;
 
-    if (acquired) {
-      try {
-        logger.info('Acquired token lock, fetching new OAuth token');
-        const newToken = await this.fetchTokenToRedis(redis);
-        return newToken;
-      } finally {
-        await redis.del(REDIS_LOCK_KEY).catch(() => {});
+    while (Date.now() <= waitDeadline) {
+      const acquiredLock = await redis.set(keys.lock, lockOwner, {
+        NX: true,
+        PX: LOCK_TTL_MS,
+      });
+
+      if (acquiredLock === 'OK') {
+        return await this.refreshTokenWhileHoldingLock(redis, lockOwner, keys);
       }
-    }
 
-    // Another pod is fetching — wait and read from Redis
-    logger.info('Token lock held by another pod, waiting...');
-    for (let attempt = 0; attempt < LOCK_MAX_RETRIES; attempt++) {
-      await this.sleep(LOCK_WAIT_MS);
-      const [waitToken, waitExpires] = await Promise.all([redis.get(REDIS_TOKEN_KEY), redis.get(REDIS_EXPIRES_KEY)]);
-      if (waitToken && waitExpires && Date.now() < Number(waitExpires)) {
-        return waitToken as string;
+      if (!hasLoggedContention) {
+        logger.info('OAuth token refresh is already in progress; waiting for the shared cache');
+        hasLoggedContention = true;
       }
+
+      const remainingWaitMs = waitDeadline - Date.now();
+      if (remainingWaitMs <= 0) {
+        break;
+      }
+
+      await this.sleep(Math.min(getRetryDelayMs(attempt), remainingWaitMs));
+
+      const refreshedToken = await this.readCachedToken(redis, keys.token);
+      if (refreshedToken) {
+        return refreshedToken;
+      }
+
+      attempt += 1;
     }
 
-    // Lock timed out without a valid token — fetch ourselves
-    logger.warn('Token lock wait timed out, fetching token directly');
-    return this.fetchTokenToRedis(redis);
+    logger.error('Timed out waiting for the shared OAuth token cache to be refreshed');
+    throw new HttpException(503, 'Service Unavailable');
   }
 
-  private async fetchTokenToRedis(redis: Awaited<ReturnType<typeof getRedisClient>> & {}): Promise<string> {
-    const token = await this.fetchFromWso2();
-    const expiresAt = Date.now() + (token.expires_in * 1000 - 10000);
-    const ttlSeconds = Math.max(1, token.expires_in - 10);
+  private async refreshTokenWhileHoldingLock(redis: RedisClient, lockOwner: string, keys: RedisTokenKeys): Promise<string> {
+    try {
+      const cachedToken = await this.readCachedToken(redis, keys.token);
+      if (cachedToken) {
+        return cachedToken;
+      }
 
-    await redis.set(REDIS_TOKEN_KEY, token.access_token, { EX: ttlSeconds });
-    await redis.set(REDIS_EXPIRES_KEY, String(expiresAt), { EX: ttlSeconds });
-    logger.info(`Token cached in Redis, valid for ${token.expires_in}s`);
+      logger.info('Acquired the shared OAuth token refresh lock');
+      const token = await this.fetchToken();
+      const cacheLifetimeMs = getCacheLifetimeMs(token.expires_in);
+      const cachedTokenValue: CachedToken = {
+        accessToken: token.access_token,
+        expiresAt: Date.now() + cacheLifetimeMs,
+      };
+
+      await redis.set(keys.token, JSON.stringify(cachedTokenValue), {
+        PX: cacheLifetimeMs,
+      });
+      logger.info(`OAuth token cached in Redis for ${cacheLifetimeMs}ms`);
+
+      return token.access_token;
+    } finally {
+      await this.releaseLock(redis, lockOwner, keys.lock);
+    }
+  }
+
+  private async releaseLock(redis: RedisClient, lockOwner: string, lockKey: string): Promise<void> {
+    try {
+      await redis.eval(RELEASE_LOCK_SCRIPT, {
+        arguments: [lockOwner],
+        keys: [lockKey],
+      });
+    } catch (error) {
+      logger.warn(`Failed to release the OAuth token refresh lock: ${getErrorMessage(error)}`);
+    }
+  }
+
+  private async readCachedToken(redis: RedisClient, tokenKey: string): Promise<string | null> {
+    const serializedToken = await redis.get(tokenKey);
+    if (!serializedToken) {
+      return null;
+    }
+
+    try {
+      const parsedToken: unknown = JSON.parse(serializedToken);
+      if (isCachedToken(parsedToken) && Date.now() < parsedToken.expiresAt) {
+        return parsedToken.accessToken;
+      }
+    } catch {
+      logger.warn('Ignoring an invalid value in the shared OAuth token cache');
+    }
+
+    return null;
+  }
+
+  private async getTokenFromMemory(): Promise<string> {
+    if (localCachedToken && Date.now() < localCachedToken.expiresAt) {
+      return localCachedToken.accessToken;
+    }
+
+    if (localTokenRequest) {
+      return await localTokenRequest;
+    }
+
+    const tokenRequest = this.fetchAndCacheTokenInMemory();
+    localTokenRequest = tokenRequest;
+
+    try {
+      return await tokenRequest;
+    } finally {
+      if (localTokenRequest === tokenRequest) {
+        localTokenRequest = null;
+      }
+    }
+  }
+
+  private async fetchAndCacheTokenInMemory(): Promise<string> {
+    const token = await this.fetchToken();
+    const cacheLifetimeMs = getCacheLifetimeMs(token.expires_in);
+
+    localCachedToken = {
+      accessToken: token.access_token,
+      expiresAt: Date.now() + cacheLifetimeMs,
+    };
+    logger.info(`OAuth token cached in memory for ${cacheLifetimeMs}ms`);
 
     return token.access_token;
   }
 
-  private async fetchTokenLocal(): Promise<string> {
-    const token = await this.fetchFromWso2();
-    localAccessToken = token.access_token;
-    localTokenExpires = Date.now() + (token.expires_in * 1000 - 10000);
-    logger.info(`Token cached in memory, valid for ${token.expires_in}s`);
-    return localAccessToken;
-  }
-
-  private async fetchFromWso2(): Promise<Token> {
+  private async fetchToken(): Promise<Token> {
     const authString = Buffer.from(`${CLIENT_KEY}:${CLIENT_SECRET}`, 'utf-8').toString('base64');
 
     try {
-      const { data } = await axios({
-        timeout: 30000, // NOTE: milliseconds
+      const { data } = await axios<unknown>({
+        timeout: TOKEN_REQUEST_TIMEOUT_MS,
         method: 'POST',
         headers: {
-          Authorization: 'Basic ' + authString,
+          Authorization: `Basic ${authString}`,
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         data: qs.stringify({
@@ -109,22 +262,26 @@ class ApiTokenService {
         }),
         url: apiURL('token'),
       });
-      const token = data as Token;
 
-      if (!token) throw new HttpException(502, 'Bad Gateway');
+      if (!isToken(data)) {
+        throw new HttpException(502, 'Bad Gateway');
+      }
 
-      logger.info(`Token valid for: ${token.expires_in}s`);
-      logger.info(`Token expires at: ${new Date(Date.now() + token.expires_in * 1000).toISOString()}`);
-
-      return token;
+      logger.info(`OAuth token is valid for ${data.expires_in}s`);
+      return data;
     } catch (error) {
-      logger.error(`Failed to fetch JWT access token: ${JSON.stringify(error)}`);
+      logger.error(`Failed to fetch an OAuth access token: ${getErrorMessage(error)}`);
+
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
       throw new HttpException(502, 'Bad Gateway');
     }
   }
 
-  private sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+  private async sleep(milliseconds: number): Promise<void> {
+    await new Promise(resolve => setTimeout(resolve, milliseconds));
   }
 }
 

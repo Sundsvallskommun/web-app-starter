@@ -1,4 +1,3 @@
-version: '3'
 services:
   backend:
     environment:
@@ -33,12 +32,28 @@ services:
       LOG_FORMAT: ${LOG_FORMAT-dev}
       LOG_DIR: ${LOG_DIR-../../data/logs}
       CREDENTIALS: ${CREDENTIALS-true}
-      # Redis (optional) - enables a shared session + API token store across instances.
-      # Leave REDIS_HOST empty locally to fall back to the file-based session store.
+      # Redis is required for multi-instance deployments. Leave REDIS_HOST empty
+      # only for single-instance local development.
       REDIS_HOST: ${REDIS_HOST-}
-      REDIS_PORT: ${REDIS_PORT-6379}
+      # Must be unique per application/credential boundary when Redis is shared.
+      REDIS_KEY_PREFIX: ${REDIS_KEY_PREFIX-}
+      # The application defaults to 6379 when REDIS_HOST is set.
+      REDIS_PORT: ${REDIS_PORT-}
       REDIS_PASSWORD: ${REDIS_PASSWORD-}
   frontend:
+    build:
+      args:
+        # NEXT_PUBLIC values and middleware configuration are embedded at build time.
+        NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:?err}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:?err}
+        DOMAIN_NAME: ${DOMAIN_NAME-}
+        BASE_PATH: ${BASE_PATH-}
+        NEXT_PUBLIC_BASE_PATH: ${NEXT_PUBLIC_BASE_PATH-}
+        ADMIN_URL: ${ADMIN_URL-}
+        NEXT_PUBLIC_PROTECTED_ROUTES: ${NEXT_PUBLIC_PROTECTED_ROUTES-}
     environment:
-      # URL to backend
+      # Runtime values used by server-side health handling.
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:?err}
+      HEALTH_AUTH: ${HEALTH_AUTH-false}
+      HEALTH_USERNAME: ${HEALTH_USERNAME-}
+      HEALTH_PASSWORD: ${HEALTH_PASSWORD-}

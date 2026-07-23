@@ -1,0 +1,10 @@
+# Strict, repo-wide quality gate before pushing. Runs the same non-browser gate as
+# `yarn verify`; Playwright remains explicit/CI because it needs browser setup.
+# Bypass (discouraged): git push --no-verify
+
+set -e
+
+echo "→ repo: verify (lint, format, type-check, knip, unit tests, build)"
+yarn verify
+
+echo "✓ pre-push checks passed"

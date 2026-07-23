@@ -8,6 +8,7 @@ import { Minus } from 'lucide-react';
 import { FieldValues, useFormContext } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { capitalize } from 'underscore.string';
+
 import { EditResourceArray } from './edit-resource-array.component';
 
 interface EditResourceObjectProps {
@@ -34,15 +35,13 @@ export const EditResourceObject: React.FC<EditResourceObjectProps> = ({
 
   const { t } = useTranslation();
 
-  type CreateType = Parameters<NonNullable<Resource<FieldValues>['create']>>[0];
-  type UpdateType = Parameters<NonNullable<Resource<FieldValues>['update']>>[1];
-  type DataType = CreateType | UpdateType;
+  type DataType = Parameters<NonNullable<Resource<FieldValues>['create']>>[0];
 
   const dataTypeKey = parents ? `${parents}.${property}` : property;
-  const i18nKey = fieldpathWithoutIndex(dataTypeKey);
+  const i18nKey = fieldpathWithoutIndex(dataTypeKey) as string;
 
   const { register, watch } = useFormContext<DataType>();
-  const formdata = watch(dataTypeKey as keyof DataType) as DataType;
+  const formdata = watch(dataTypeKey) as DataType;
 
   const Headercomp: React.ElementType = `h${level}` as React.ElementType;
 
@@ -68,7 +67,7 @@ export const EditResourceObject: React.FC<EditResourceObjectProps> = ({
                 resource: t(`${resource}:properties.${i18nKey}.DEFAULT`),
               })
             )}
-            onClick={() => onRemove && onRemove()}
+            onClick={() => onRemove?.()}
           >
             <Minus />
           </Button>
@@ -78,22 +77,19 @@ export const EditResourceObject: React.FC<EditResourceObjectProps> = ({
         Object.keys(formdata)
           .filter((key) => !defaultInformationFields.includes(key))
           .map((key, index) => {
-            const type = typeof formdata[key as keyof DataType];
+            const type = typeof formdata[key];
             const isRequired =
               requiredFields ? fieldpathWithoutIndex(requiredFields)?.includes(`${i18nKey}.${key}`) : false;
             if (type === 'string' || type === 'number') {
               return (
                 <FormControl key={`res-object-${index}`} required={isRequired}>
                   <FormLabel>{capitalize(t(`${resource}:properties.${i18nKey}.${key}`))}</FormLabel>
-                  <Input
-                    type={type === 'number' ? 'number' : 'text'}
-                    {...register(`${dataTypeKey}.${key}` as keyof DataType)}
-                  />
+                  <Input type={type === 'number' ? 'number' : 'text'} {...register(`${dataTypeKey}.${key}`)} />
                 </FormControl>
               );
             }
             if (type === 'object') {
-              return Array.isArray(formdata[key as keyof DataType]) ?
+              return Array.isArray(formdata[key]) ?
                   <EditResourceArray
                     key={`res-object-${index}`}
                     resource={resource}
@@ -109,6 +105,7 @@ export const EditResourceObject: React.FC<EditResourceObjectProps> = ({
                     property={key}
                   />;
             }
+            return null;
           })}
     </div>
   );

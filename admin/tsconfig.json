@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "es6",
+    "target": "es2022",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
@@ -11,31 +11,33 @@
     "strictNullChecks": true,
     "strictPropertyInitialization": true,
     "forceConsistentCasingInFileNames": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "incremental": true,
-    "baseUrl": ".",
+    "types": ["node", "next", "next/image-types/global", "vitest/globals", "@testing-library/jest-dom"],
     "paths": {
-      "@config/*": ["src/config/*"],
-      "@services/*": ["src/services/*"],
-      "@components/*": ["src/components/*"],
-      "@interfaces/*": ["src/interfaces/*"],
-      "@contexts/*": ["src/contexts/*"],
-      "@layouts/*": ["src/layouts/*"],
-      "@styles/*": ["src/styles/*"],
-      "@utils/*": ["src/utils/*"],
-      "@pages/*": ["src/pages/*"],
-      "@middlewares/*": ["src/utils/middlewares/*"],
-      "@public/*": ["public/*"],
-      "@jestRoot/*": [".jest/*"],
-      "@data-contracts/*": ["src/data-contracts/*"]
+      "@config/*": ["./src/config/*"],
+      "@services/*": ["./src/services/*"],
+      "@components/*": ["./src/components/*"],
+      "@interfaces/*": ["./src/interfaces/*"],
+      "@contexts/*": ["./src/contexts/*"],
+      "@layouts/*": ["./src/layouts/*"],
+      "@styles/*": ["./src/styles/*"],
+      "@utils/*": ["./src/utils/*"],
+      "@pages/*": ["./src/pages/*"],
+      "@middlewares/*": ["./src/utils/middlewares/*"],
+      "@public/*": ["./public/*"],
+      "@data-contracts/*": ["./src/data-contracts/*"]
     }
   },
-  "include": ["next-env.d.ts", "node_modules/dayjs/plugin/utc.d.ts", "**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules", "**/*.test.jsx"]
+  "include": ["node_modules/dayjs/plugin/utc.d.ts", "**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules", "vitest.config.ts", "**/*.test.jsx"]
 }

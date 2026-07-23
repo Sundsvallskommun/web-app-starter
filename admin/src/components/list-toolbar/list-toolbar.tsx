@@ -29,14 +29,12 @@ export const ListToolbar: React.FC<ListToolbarProps> = ({ onRefresh, resource, p
 
   useEffect(() => {
     reset({ headers });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resource]);
 
   useEffect(() => {
     if (!selectedHeaders) {
       reset({ headers });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [headers]);
 
   useEffect(() => {
@@ -45,7 +43,6 @@ export const ListToolbar: React.FC<ListToolbarProps> = ({ onRefresh, resource, p
         setHeaders({ [resource]: selectedHeaders });
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedHeaders, properties, setHeaders]);
 
   return (
@@ -62,7 +59,14 @@ export const ListToolbar: React.FC<ListToolbarProps> = ({ onRefresh, resource, p
         </Link>
       )}
       {!!onRefresh && (
-        <Button iconButton variant="tertiary" aria-label={capitalize(t('common:refresh'))} onClick={() => onRefresh()}>
+        <Button
+          iconButton
+          variant="tertiary"
+          aria-label={capitalize(t('common:refresh'))}
+          onClick={() => {
+            onRefresh();
+          }}
+        >
           <Icon icon={<RefreshCcw />} />
         </Button>
       )}

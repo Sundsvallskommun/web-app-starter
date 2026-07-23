@@ -1,5 +1,4 @@
 import { FormControl, FormLabel, Input, Switch } from '@sk-web-gui/react';
- 
 import { useFormContext } from 'react-hook-form';
 
 type InputProps = React.ComponentPropsWithoutRef<typeof Input.Component>;
@@ -13,7 +12,7 @@ interface EditResourceInputProps extends Omit<InputProps, 'ref' | 'key'> {
 
 export const EditResourceInput: React.FC<EditResourceInputProps> = ({ label, property, required, ...rest }) => {
   const { register, watch } = useFormContext();
-  const data = watch(property);
+  const data: unknown = watch(property);
   const type = typeof data;
 
   return type === 'object' ?

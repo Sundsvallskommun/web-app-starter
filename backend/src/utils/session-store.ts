@@ -1,3 +1,4 @@
+import { REDIS_CONFIG } from '@config';
 import { RedisStore } from 'connect-redis';
 import session from 'express-session';
 import createFileStore from 'session-file-store';
@@ -5,26 +6,27 @@ import createFileStore from 'session-file-store';
 import { logger } from './logger';
 import { getRedisClient } from './redis';
 
-const SESSION_TTL = 4 * 24 * 60 * 60;
+const SESSION_TTL_SECONDS = 4 * 24 * 60 * 60;
+const SESSION_FILE_PATH = './data/sessions';
 
 /**
- * Builds the express-session store.
- * Uses Redis when REDIS_HOST is configured (required for multi-pod deployments),
- * otherwise falls back to a file-based store for local development.
+ * Redis is mandatory when configured so a multi-pod deployment cannot silently
+ * split sessions between local files. File storage is reserved for local setups
+ * where Redis is deliberately absent.
  */
 export async function createSessionStore(): Promise<session.Store> {
-  const redisClient = await getRedisClient();
+  if (REDIS_CONFIG.enabled) {
+    const redisClient = await getRedisClient();
 
-  if (redisClient) {
+    if (!redisClient) {
+      throw new Error('Redis is configured but no Redis client was created');
+    }
+
     logger.info('Using Redis session store');
-    return new RedisStore({ client: redisClient, prefix: 'sess:', ttl: SESSION_TTL });
-  }
-
-  if (process.env.REDIS_HOST) {
-    throw new Error('REDIS_HOST is set but Redis connection failed. Refusing to fall back to file-based sessions.');
+    return new RedisStore({ client: redisClient, prefix: `${REDIS_CONFIG.keyPrefix}:session:`, ttl: SESSION_TTL_SECONDS });
   }
 
   const FileStore = createFileStore(session);
-  logger.info('Using file-based session store (no REDIS_HOST)');
-  return new FileStore({ ttl: SESSION_TTL, path: './data/sessions' });
+  logger.info('Using file-based session store (Redis is not configured)');
+  return new FileStore({ ttl: SESSION_TTL_SECONDS, path: SESSION_FILE_PATH });
 }

@@ -3,24 +3,26 @@
 import { CookieConsent, Footer, Header, Link } from '@sk-web-gui/react';
 import NextLink from 'next/link';
 import { useRouter } from 'next/navigation';
+import { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
- 
 
 interface DefaultLayoutProps {
-  children: React.ReactNode;
+  children: ReactNode;
   headerTitle?: string;
   headerSubtitle?: string;
-  preContent?: React.ReactNode;
-  postContent?: React.ReactNode;
+  preContent?: ReactNode;
+  postContent?: ReactNode;
   logoLinkHref?: string;
 }
 
+const appName = process.env.NEXT_PUBLIC_APP_NAME ?? 'Web App Starter';
+
 export default function DefaultLayout({
-  headerTitle,
-  headerSubtitle,
+  headerTitle = appName,
+  headerSubtitle = '',
   children,
-  preContent = undefined,
-  postContent = undefined,
+  preContent,
+  postContent,
   logoLinkHref = '/',
 }: DefaultLayoutProps) {
   const router = useRouter();
@@ -37,43 +39,32 @@ export default function DefaultLayout({
 
   return (
     <div className="DefaultLayout full-page-layout">
-      <Link
-        as={NextLink}
-        href="#content"
-        onClick={setFocusToMain}
-        accessKey="s"
-        className="next-link-a"
-        data-cy="systemMessage-a"
-      >
+      <NextLink href="#content" onClick={setFocusToMain} accessKey="s" className="next-link-a">
         {t('layout:header.goto_content')}
-      </Link>
+      </NextLink>
 
       <Header
-        data-cy="nav-header"
-        title={headerTitle ? headerTitle : process.env.NEXT_PUBLIC_APP_NAME}
-        subtitle={headerSubtitle ? headerSubtitle : ''}
-        aria-label={`${headerTitle ? headerTitle : process.env.NEXT_PUBLIC_APP_NAME} ${headerSubtitle}`}
+        title={headerTitle}
+        subtitle={headerSubtitle}
+        aria-label={`${headerTitle}${headerSubtitle ? ` ${headerSubtitle}` : ''}`}
         logoLinkOnClick={handleLogoClick}
       />
 
-      {preContent && preContent}
+      {preContent}
 
-      <div className={`main-container flex-grow relative w-full flex flex-col`}>
+      <div className="main-container flex-grow relative w-full flex flex-col">
         <div className="main-content-padding">{children}</div>
       </div>
 
-      {postContent && postContent}
+      {postContent}
 
-      <Footer></Footer>
+      <Footer />
 
       <CookieConsent
-        title={t('layout:cookies.title', { app: process.env.NEXT_PUBLIC_APP_NAME })}
+        title={t('layout:cookies.title', { app: appName })}
         body={
           <p>
-            {t('layout:cookies.description')}{' '}
-            <NextLink href="/kakor" passHref legacyBehavior>
-              <Link>{t('layout:cookies.read_more')}</Link>
-            </NextLink>
+            {t('layout:cookies.description')} <Link href="/kakor">{t('layout:cookies.read_more')}</Link>
           </p>
         }
         cookies={[
@@ -97,10 +88,7 @@ export default function DefaultLayout({
           },
         ]}
         resetConsentOnInit={false}
-        onConsent={() => {
-          // FIXME: do stuff with cookies?
-          // NO ANO FUNCTIONS
-        }}
+        onConsent={() => undefined}
       />
     </div>
   );
