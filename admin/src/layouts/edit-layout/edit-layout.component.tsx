@@ -1,11 +1,11 @@
-import Link from 'next/link';
-import DefaultLayout from '../default-layout/default-layout.component';
-import Main from '../main/main.component';
- 
+import { Header } from '@layouts/header/header.component';
 import { Icon } from '@sk-web-gui/react';
 import { ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
-import { Header } from '@layouts/header/header.component';
+
+import DefaultLayout from '../default-layout/default-layout.component';
+import Main from '../main/main.component';
 
 interface EditLayoutProps {
   /**
@@ -17,7 +17,7 @@ interface EditLayoutProps {
   children?: React.ReactNode;
 }
 
-export const EditLayout: React.FC<EditLayoutProps> = (props) => {
+const EditLayout: React.FC<EditLayoutProps> = (props) => {
   const { backLink, title, headerInfo, children } = props;
   const { t } = useTranslation();
 

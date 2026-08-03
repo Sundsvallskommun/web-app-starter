@@ -9,10 +9,10 @@ import { Spinner } from '@sk-web-gui/react';
 import { stringToResourceName } from '@utils/stringToResourceName';
 import { useResource } from '@utils/use-resource';
 import { GetServerSideProps } from 'next';
-import { useTranslation } from 'next-i18next';
-import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import { useParams } from 'next/navigation';
 import { useRouter } from 'next/router';
+import { useTranslation } from 'next-i18next/pages';
+import { serverSideTranslations } from 'next-i18next/pages/serverSideTranslations';
 import { useEffect } from 'react';
 import { capitalize } from 'underscore.string';
 
@@ -21,21 +21,24 @@ export const Exempelsida: React.FC = () => {
   const router = useRouter();
 
   const { resource: _resource } = useParams();
-  const resource = stringToResourceName(typeof _resource === 'object' ? _resource[0] : _resource);
+  const parsedResource = stringToResourceName(typeof _resource === 'object' ? (_resource[0] ?? '') : (_resource ?? ''));
+  const resource: ResourceName = parsedResource ?? (Object.keys(resources)[0] as ResourceName);
 
-  const { data, refresh, loaded, loading } = useResource(resource as ResourceName);
+  const { data, refresh, loaded, loading } = useResource(resource);
 
   useEffect(() => {
-    if (!resource) {
-      router.push('/');
+    if (!parsedResource) {
+      router.push('/').catch((error: unknown) => {
+        console.error('Failed to redirect from unknown resource.', error);
+      });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resource]);
+  }, [parsedResource, router]);
 
   const getProperties = () => {
-    return data?.[0] ?
-        Object.keys(data[0]).filter((key) => {
-          const type = typeof data[0][key];
+    const firstRow = data?.[0];
+    return firstRow ?
+        Object.keys(firstRow).filter((key) => {
+          const type = typeof firstRow[key];
           return type === 'string' || type === 'number' || type === 'boolean';
         })
       : undefined;

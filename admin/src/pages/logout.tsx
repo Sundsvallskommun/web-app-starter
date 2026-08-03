@@ -13,15 +13,17 @@ export default function Logout() {
   useEffect(() => {
     resetUser();
     localStorage.clear();
-    router.push({
-      pathname: apiURL('/saml/logout'),
-      query: {
-        successRedirect: `${appURL()}/login?loggedout`,
-      },
-    });
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    router
+      .push({
+        pathname: apiURL('/saml/logout'),
+        query: {
+          successRedirect: `${appURL()}/login?loggedout`,
+        },
+      })
+      .catch((error: unknown) => {
+        console.error('Failed to redirect to SAML logout.', error);
+      });
+  }, [resetUser, router]);
 
   return <></>;
 }

@@ -1,30 +1,56 @@
-"use client";
+'use client';
 
+import LeadButtons from '@layouts/button-groups/lead-buttons';
 import { useUserStore } from '@services/user-service/user-service';
-import { Link } from '@sk-web-gui/react';
+import { Button } from '@sk-web-gui/react';
+import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import NextLink from 'next/link';
-import { capitalize } from 'lodash';
 import { useShallow } from 'zustand/react/shallow';
- 
 
-const Example: React.FC = () => {
-  const user = useUserStore(useShallow((s) => s.user));
+const Example = () => {
+  const router = useRouter();
+  const user = useUserStore(useShallow((state) => state.user));
   const { t } = useTranslation();
-  console.log('user', user);
-  const userString = user.name ? ` ${user.name}` : '';
+
+  const displayName = user.name.trim() || t('example:anonymous_user');
+
   return (
-        <div data-cy="example-text" className="text-content">
-          <h1>{`${capitalize(t('example:welcome'))}${userString}!`}</h1>
-          <p>{t('example:description')}</p>
-          {user.name ?
-            <NextLink href={`/logout`}>
-              <Link as="span" variant="link">
-                {capitalize(t('common:logout'))}
-              </Link>
-            </NextLink>
-          : ''}
+    <div className="flex flex-col gap-32 text-content max-w-screen-lg">
+      <section className="flex flex-col gap-16">
+        <h1>{t('example:title')}</h1>
+        <p className="text-large">{t('example:description')}</p>
+      </section>
+
+      <section className="grid gap-24 md:grid-cols-2">
+        <div className="flex flex-col gap-12 rounded-sm border border-divider p-24 bg-background-content">
+          <h2 className="text-h4-md">{t('example:layout_heading')}</h2>
+          <p>{t('example:layout_body')}</p>
         </div>
+
+        <div className="flex flex-col gap-12 rounded-sm border border-divider p-24 bg-background-content">
+          <h2 className="text-h4-md">{t('example:state_heading')}</h2>
+          <p>{t('example:state_body', { name: displayName })}</p>
+        </div>
+      </section>
+
+      <LeadButtons>
+        <Button
+          onClick={() => {
+            router.push('/login');
+          }}
+        >
+          {t('example:primary_action')}
+        </Button>
+        <Button
+          variant="secondary"
+          onClick={() => {
+            router.push('/logout');
+          }}
+        >
+          {t('example:secondary_action')}
+        </Button>
+      </LeadButtons>
+    </div>
   );
 };
 

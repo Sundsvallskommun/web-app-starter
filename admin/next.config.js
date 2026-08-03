@@ -1,21 +1,10 @@
 const envalid = require('envalid');
 const { i18n } = require('./next-i18next.config');
 
-const authDependent = envalid.makeValidator((x) => {
-  const authEnabled = process.env.HEALTH_AUTH === 'true';
-
-  if (authEnabled && !x.length) {
-    throw new Error(`Can't be empty if "HEALTH_AUTH" is true`);
-  }
-
-  return x;
-});
-
 envalid.cleanEnv(process.env, {
+  NEXT_PUBLIC_APP_NAME: envalid.str(),
+  NEXT_PUBLIC_API_PATH: envalid.str({ default: '' }),
   NEXT_PUBLIC_API_URL: envalid.str(),
-  HEALTH_AUTH: envalid.bool(),
-  HEALTH_USERNAME: authDependent(),
-  HEALTH_PASSWORD: authDependent(),
 });
 
 const withBundleAnalyzer = require('@next/bundle-analyzer')({
@@ -26,7 +15,8 @@ module.exports = withBundleAnalyzer({
   output: 'standalone',
   i18n,
   images: {
-    domains: [process.env.DOMAIN_NAME],
+    // Next 16 removed `images.domains` in favour of `remotePatterns`.
+    remotePatterns: process.env.DOMAIN_NAME ? [{ hostname: process.env.DOMAIN_NAME }] : [],
     formats: ['image/avif', 'image/webp'],
   },
   basePath: process.env.BASE_PATH,
@@ -36,6 +26,9 @@ module.exports = withBundleAnalyzer({
   transpilePackages: ['lucide-react'],
   experimental: {
     optimizePackageImports: ['@sk-web-gui'],
+  },
+  turbopack: {
+    root: __dirname,
   },
   async rewrites() {
     return [{ source: '/napi/:path*', destination: '/api/:path*' }];

@@ -1,0 +1,100 @@
+name: Build
+
+on:
+  pull_request:
+  push:
+    branches:
+      - develop
+      - main
+
+jobs:
+  build-backend:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    name: Build Backend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: yarn
+          cache-dependency-path: backend/yarn.lock
+      - name: Install dependencies
+        run: yarn --frozen-lockfile --ignore-scripts --silent
+      - name: Run build
+        run: yarn build
+
+  build-frontend:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    name: Build Frontend
+    env:
+      NEXT_PUBLIC_APP_NAME: Web App Starter
+      NEXT_PUBLIC_API_URL: http://localhost:3001/api
+      DOMAIN_NAME: localhost
+      BASE_PATH: ''
+      NEXT_PUBLIC_BASE_PATH: ''
+      ADMIN_URL: http://localhost:3002/
+      NEXT_PUBLIC_PROTECTED_ROUTES: ''
+      HEALTH_AUTH: 'false'
+      HEALTH_USERNAME: ''
+      HEALTH_PASSWORD: ''
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: yarn
+          cache-dependency-path: frontend/yarn.lock
+      - name: Install dependencies
+        run: yarn --frozen-lockfile --ignore-scripts --silent
+      - name: Verify Next image optimization
+        run: node ../.github/scripts/verify-next-sharp.cjs
+      - name: Run build
+        run: yarn build:test
+
+  build-admin:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: admin
+    name: Build Admin
+    env:
+      NEXT_PUBLIC_APP_NAME: Web App Starter Admin
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+      NEXT_PUBLIC_API_PATH: /api
+      DOMAIN_NAME: localhost
+      BASE_PATH: ''
+      NEXT_PUBLIC_BASE_PATH: ''
+      HEALTH_AUTH: 'false'
+      HEALTH_USERNAME: ''
+      HEALTH_PASSWORD: ''
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: yarn
+          cache-dependency-path: admin/yarn.lock
+      - name: Install dependencies
+        run: yarn --frozen-lockfile --ignore-scripts --silent
+      - name: Verify Next image optimization
+        run: node ../.github/scripts/verify-next-sharp.cjs
+      - name: Run build
+        run: yarn build

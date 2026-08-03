@@ -10,7 +10,7 @@ export const Menu = () => {
   const { t } = useTranslation();
 
   useEffect(() => {
-    const path = window.location.pathname;
+    const path = globalThis.location.pathname;
     const resource = Object.keys(resources).find((resource) => {
       return path.startsWith(`${process.env.NEXT_PUBLIC_BASE_PATH}/${resource}`);
     });
@@ -19,8 +19,7 @@ export const Menu = () => {
     } else {
       setCurrent('');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [window]);
+  }, []);
 
   useEffect(() => {
     if (current.includes('-parent')) {

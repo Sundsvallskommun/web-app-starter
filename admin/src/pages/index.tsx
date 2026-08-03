@@ -5,8 +5,9 @@ import { useEffect } from 'react';
 export default function Index() {
   const router = useRouter();
   useEffect(() => {
-    router.push('/start');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    router.push('/start').catch((error: unknown) => {
+      console.error('Failed to redirect to start page.', error);
+    });
+  }, [router]);
   return <LoaderFullScreen />;
 }

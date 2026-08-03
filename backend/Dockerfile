@@ -1,36 +1,47 @@
-# Backend
-# Install dependencies only when needed
-FROM node:22-slim AS deps
-RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
-WORKDIR /app
-COPY package.json yarn.lock ./
-RUN yarn install --frozen-lockfile
+FROM node:24-slim AS base
 
-# Rebuild the source code only when needed
-FROM node:22-slim AS builder
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openssl \
+  && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+
+FROM base AS dependencies
+
+COPY package.json yarn.lock ./
+RUN yarn install --frozen-lockfile --ignore-scripts --non-interactive
+
+FROM dependencies AS builder
+
 COPY . .
 RUN yarn build
 
-# Production image, copy all the files and run the server
-FROM node:22-slim AS runner
-RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
-WORKDIR /app
+FROM base AS production-dependencies
 
 ENV NODE_ENV=production
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nodejs
+COPY package.json yarn.lock ./
+RUN yarn install --frozen-lockfile --ignore-scripts --production=true --non-interactive \
+  && yarn cache clean
 
-COPY --from=builder --chown=nodejs:nodejs /app/ ./
+FROM base AS runner
 
-# Writable folders for logs and file-based sessions (sessions used when REDIS_HOST is not set)
-RUN mkdir -p /app/data/sessions /app/data/logs && chown -R nodejs:nodejs /app/data
+ENV NODE_ENV=production \
+  PORT=3000
 
-USER nodejs
+COPY --from=production-dependencies --chown=root:root /app/node_modules ./node_modules
+COPY --from=builder --chown=root:root /app/dist ./dist
+COPY --chown=root:root package.json ./package.json
+
+# UID 1001 preserves ownership compatibility with volumes created by previous
+# releases. Group 0 write access also supports OpenShift's arbitrary runtime UID.
+RUN useradd --uid 1001 --gid 0 --no-create-home --home-dir /nonexistent --shell /usr/sbin/nologin app \
+  && mkdir -p /app/data/logs /app/data/sessions \
+  && chown -R 1001:0 /app/data \
+  && chmod -R g=u /app/data
+
+USER 1001:0
 
 EXPOSE 3000
-ENV PORT=3000
 
 CMD ["node", "./dist/server.js"]

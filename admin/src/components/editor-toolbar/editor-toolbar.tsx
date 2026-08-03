@@ -1,4 +1,5 @@
 import resources from '@config/resources';
+import { ResourceResponse } from '@interfaces/resource';
 import { ResourceName } from '@interfaces/resource-name';
 import { Button, Icon, useConfirm } from '@sk-web-gui/react';
 import { useCrudHelper } from '@utils/use-crud-helpers';
@@ -16,38 +17,34 @@ interface ToolbarProps {
 
 export const EditorToolbar: React.FC<ToolbarProps> = ({ resource, isDirty, id }) => {
   const router = useRouter();
-  const parentPath = resource ? `/${resource}` : router.pathname.split('/[')[0].replace('/new', '');
+  const parentPath = resource ? `/${resource}` : (router.pathname.split('/[')[0] ?? '').replace('/new', '');
   const { remove } = resources[resource];
   const { handleRemove } = useCrudHelper(resource);
   const confirm = useConfirm();
   const { reset } = useFormContext();
+  const { t } = useTranslation();
 
-  const onRemove = () => {
+  const onRemove = async (): Promise<void> => {
     if (remove && id) {
-      confirm
-        .showConfirmation(
-          capitalize(t('common:remove_resource', { resource: t(`${resource}:name_one`) })),
-          capitalize(t('common:can_not_be_undone')),
-          capitalize(t('common:remove')),
-          capitalize(t('common:keep_edit')),
-          'error'
-        )
-        .then((confirm) => {
-          if (confirm) {
-            handleRemove(remove(id)).then((res) => {
-              if (res) {
-                reset();
-                router.push(parentPath);
-              }
-            });
-          }
-        });
+      const confirmed = await confirm.showConfirmation(
+        capitalize(t('common:remove_resource', { resource: t(`${resource}:name_one`) })),
+        capitalize(t('common:can_not_be_undone')),
+        capitalize(t('common:remove')),
+        capitalize(t('common:keep_edit')),
+        'error'
+      );
+      if (!confirmed) return;
+
+      const res = await handleRemove(() => remove(id) as ResourceResponse<unknown>);
+      if (res) {
+        reset();
+        await router.push(parentPath);
+      }
     } else if (!id) {
-      router.push(parentPath);
+      await router.push(parentPath);
     }
   };
 
-  const { t } = useTranslation();
   return (
     <Button.Group className="absolute top-40 right-48 w-fit">
       <Button
@@ -61,7 +58,7 @@ export const EditorToolbar: React.FC<ToolbarProps> = ({ resource, isDirty, id })
         aria-label={capitalize(t('common:save'))}
       ></Button>
 
-      {((!!remove && id) || !id) && (
+      {((!!remove && !!id) || !id) && (
         <>
           <Button
             variant="tertiary"
@@ -70,7 +67,11 @@ export const EditorToolbar: React.FC<ToolbarProps> = ({ resource, isDirty, id })
             iconButton
             aria-label={capitalize(t('common:remove', { resource: t(`${resource}:name_one`) }))}
             size="sm"
-            onClick={() => onRemove()}
+            onClick={() => {
+              onRemove().catch((error: unknown) => {
+                console.error('Failed to remove resource.', error);
+              });
+            }}
           >
             <Icon icon={<Trash />} />
           </Button>

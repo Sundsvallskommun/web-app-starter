@@ -1,0 +1,94 @@
+name: Unit Tests
+
+on:
+  pull_request:
+  push:
+    branches:
+      - develop
+      - main
+
+jobs:
+  test-backend:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    name: Unit Tests Backend
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: yarn
+          cache-dependency-path: backend/yarn.lock
+      - name: Install dependencies
+        run: yarn --frozen-lockfile --ignore-scripts --silent
+      - name: Run unit tests
+        run: yarn test:coverage
+      - name: Run Redis integration tests
+        env:
+          REDIS_INTEGRATION: "true"
+          REDIS_HOST: 127.0.0.1
+          REDIS_PORT: "6379"
+          REDIS_KEY_PREFIX: ci:test
+        run: ./node_modules/.bin/vitest run src/utils/redis.integration.test.ts
+
+  test-frontend:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    name: Unit Tests Frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: yarn
+          cache-dependency-path: frontend/yarn.lock
+      - name: Install dependencies
+        run: yarn --frozen-lockfile --ignore-scripts --silent
+      - name: Generate middleware envs
+        run: yarn generate:middleware-envs
+      - name: Run unit tests
+        run: yarn test:coverage
+
+  test-admin:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: admin
+    name: Unit Tests Admin
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: yarn
+          cache-dependency-path: admin/yarn.lock
+      - name: Install dependencies
+        run: yarn --frozen-lockfile --ignore-scripts --silent
+      - name: Run unit tests
+        run: yarn test:coverage

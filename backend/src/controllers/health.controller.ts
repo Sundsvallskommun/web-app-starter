@@ -1,8 +1,11 @@
-import { getApiBase } from '@/config/api-config';
-import ApiService from '@/services/api.service';
-import { logger } from '@/utils/logger';
 import { Controller, Get } from 'routing-controllers';
 import { OpenAPI } from 'routing-controllers-openapi';
+
+import { getApiBase } from '@/config/api-config';
+import { HttpException } from '@/exceptions/HttpException';
+import ApiService from '@/services/api.service';
+import { logger } from '@/utils/logger';
+import { isRedisReady } from '@/utils/redis';
 
 @Controller()
 export class HealthController {
@@ -11,16 +14,20 @@ export class HealthController {
 
   @Get('/health/up')
   @OpenAPI({ summary: 'Return health check' })
-  async up() {
-    const url = `${this.apiBaseUrl}/simulations/response?status=200%20OK`;
-    const data = {
-      status: 'OK',
-    };
-    const res = await this.apiService.post<{ status: string }>({ url, data }).catch(e => {
-      logger.error('Error when doing health check:', e);
-      return e;
-    });
+  async up(): Promise<{ status: string }> {
+    if (!isRedisReady()) {
+      logger.error('Health check failed: Redis is not ready');
+      throw new HttpException(503, 'Health check failed');
+    }
 
-    return res.data;
+    const url = `${this.apiBaseUrl}/simulations/response?status=200%20OK`;
+    const data = { status: 'OK' };
+    try {
+      const res = await this.apiService.post<{ status: string }>({ url, data });
+      return res.data;
+    } catch (error: unknown) {
+      logger.error('Error when doing health check:', error);
+      throw new HttpException(502, 'Health check failed');
+    }
   }
 }

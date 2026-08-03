@@ -42,7 +42,7 @@ GetOne<TResponse> = (id: ID, params?: RequestParams) => TResponse;
 GetMany<TResponse> = (params?: RequestParams) => TResponse;
 Create<TData, TResponse> = (data: TData, params?: RequestParams) => TResponse;
 Update<TData, TResponse> = (id: ID, data: TData, params?: RequestParams) => TResponse;
-Remove<T = any> = (id: ID, params?: RequestParams) => T;
+Remove<T = unknown> = (id: ID, params?: RequestParams) => T;
 ```
 
 Återkommande fält bör också hålla sig till en standard.

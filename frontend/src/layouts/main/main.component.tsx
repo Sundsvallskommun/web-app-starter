@@ -1,5 +1,4 @@
 import { ReactNode } from 'react';
- 
 
 interface MainProps {
   children: ReactNode;
@@ -7,10 +6,8 @@ interface MainProps {
 
 export default function Main({ children }: MainProps) {
   return (
-    <div className="container">
-      <main id="content" tabIndex={-1}>
-        {children}
-      </main>
-    </div>
+    <main className="min-h-full h-auto w-full flex flex-col pb-32" id="content" tabIndex={-1}>
+      {children}
+    </main>
   );
 }

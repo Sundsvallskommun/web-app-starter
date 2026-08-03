@@ -1,36 +1,23 @@
-import { Request } from 'express';
 import { User } from '@interfaces/users.interface';
-
-export interface DataStoredInToken {
-  id: number;
-}
-
-export interface TokenData {
-  token: string;
-  expiresIn: number;
-}
-
-// export interface Representing {
-//   organizationName: string;
-//   organizationNumber: string;
-//   organizationId: string;
-// }
+import { Request } from 'express';
 
 export interface RequestWithUser extends Request {
   user: User;
-  // representing?: Representing;
 }
 
+/** @public Permission flags resolved from a user's role. */
 export interface Permissions {
   canEditSystemMessages: boolean;
 }
 
-/** AD roles */
+/** @public AD (Active Directory) group roles. */
 export type ADRole = 'sg_appl_app_admin' | 'sg_appl_app_read';
 
-/** Internal roles */
+/** @public Internal application roles. */
 export type InternalRole = 'app_admin' | 'app_read';
+
+/** @public */
 export enum InternalRoleEnum {
-  'app_read',
-  'app_admin',
+  app_read,
+  app_admin,
 }
