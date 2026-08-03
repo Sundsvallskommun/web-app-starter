@@ -3,7 +3,6 @@
   "entry": [
     "src/server.ts",
     "src/types/**/*.d.ts",
-    "src/tests/**/*.{test,spec}.ts",
     "src/middlewares/validation.middleware.ts",
     "src/services/authorization.service.ts"
   ],
