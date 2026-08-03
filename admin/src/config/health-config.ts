@@ -1,48 +1,33 @@
 import { timingSafeEqual } from 'node:crypto';
 
+import { cleanEnv, makeExactValidator, makeValidator, str } from 'envalid';
+
 const DEFAULT_REQUEST_TIMEOUT_MS = 3_000;
 const MAX_REQUEST_TIMEOUT_MS = 30_000;
-type Environment = Readonly<Record<string, string | undefined>>;
-
-type HealthAuthentication =
-  | { enabled: false }
-  | {
-      enabled: true;
-      expectedAuthorization: string;
-    };
 
 interface HealthConfig {
-  authentication: HealthAuthentication;
-  backendHealthUrl: string;
-  requestTimeoutMs: number;
+  readonly authentication:
+    | Readonly<{ enabled: false }>
+    | Readonly<{
+        enabled: true;
+        expectedAuthorization: string;
+      }>;
+  readonly backendHealthUrl: string;
+  readonly requestTimeoutMs: number;
 }
 
-const parseAuthentication = (environment: Environment): HealthAuthentication => {
-  const healthAuth = environment.HEALTH_AUTH ?? 'false';
+type Environment = Readonly<Record<string, string | undefined>>;
 
-  if (healthAuth !== 'true' && healthAuth !== 'false') {
+const strictBoolean = makeExactValidator<boolean>((rawValue) => {
+  if (rawValue !== 'true' && rawValue !== 'false') {
     throw new Error('HEALTH_AUTH must be either "true" or "false"');
   }
 
-  if (healthAuth === 'false') {
-    return { enabled: false };
-  }
+  return rawValue === 'true';
+});
 
-  const username = environment.HEALTH_USERNAME ?? '';
-  const password = environment.HEALTH_PASSWORD ?? '';
-
-  if (!username || !password) {
-    throw new Error('HEALTH_USERNAME and HEALTH_PASSWORD are required when HEALTH_AUTH is true');
-  }
-
-  return {
-    enabled: true,
-    expectedAuthorization: `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`,
-  };
-};
-
-const parseBackendHealthUrl = (environment: Environment): string => {
-  const internalApiUrl = environment.INTERNAL_API_URL?.trim();
+const backendHealthUrl = makeValidator<string>((rawValue) => {
+  const internalApiUrl = rawValue.trim();
 
   if (!internalApiUrl) {
     throw new Error('INTERNAL_API_URL is required');
@@ -55,29 +40,54 @@ const parseBackendHealthUrl = (environment: Environment): string => {
   }
 
   return new URL('health/up', baseUrl).toString();
-};
+});
 
-const parseRequestTimeout = (environment: Environment): number => {
-  const rawTimeout = environment.HEALTH_REQUEST_TIMEOUT_MS;
-
-  if (rawTimeout === undefined || rawTimeout === '') {
+const requestTimeout = makeValidator<number>((rawValue) => {
+  if (rawValue === '') {
     return DEFAULT_REQUEST_TIMEOUT_MS;
   }
 
-  const timeout = Number(rawTimeout);
+  const timeout = Number(rawValue);
 
-  if (!/^\d+$/.test(rawTimeout) || !Number.isInteger(timeout) || timeout < 1 || timeout > MAX_REQUEST_TIMEOUT_MS) {
+  if (!/^\d+$/.test(rawValue) || !Number.isInteger(timeout) || timeout < 1 || timeout > MAX_REQUEST_TIMEOUT_MS) {
     throw new Error(`HEALTH_REQUEST_TIMEOUT_MS must be an integer between 1 and ${MAX_REQUEST_TIMEOUT_MS}`);
   }
 
   return timeout;
+});
+
+const environmentSpec = {
+  HEALTH_AUTH: strictBoolean({ default: false }),
+  HEALTH_PASSWORD: str({ default: '' }),
+  HEALTH_REQUEST_TIMEOUT_MS: requestTimeout({ default: DEFAULT_REQUEST_TIMEOUT_MS }),
+  HEALTH_USERNAME: str({ default: '' }),
+  INTERNAL_API_URL: backendHealthUrl({ desc: 'INTERNAL_API_URL is required' }),
 };
 
-export const createHealthConfig = (environment: Environment): HealthConfig => ({
-  authentication: parseAuthentication(environment),
-  backendHealthUrl: parseBackendHealthUrl(environment),
-  requestTimeoutMs: parseRequestTimeout(environment),
-});
+export const createHealthConfig = (environment: Environment): HealthConfig => {
+  const validatedEnvironment = cleanEnv(environment, environmentSpec, { reporter: null });
+  const { HEALTH_AUTH, HEALTH_PASSWORD, HEALTH_USERNAME } = validatedEnvironment;
+
+  if (!HEALTH_AUTH) {
+    return {
+      authentication: { enabled: false },
+      backendHealthUrl: validatedEnvironment.INTERNAL_API_URL,
+      requestTimeoutMs: validatedEnvironment.HEALTH_REQUEST_TIMEOUT_MS,
+    };
+  }
+
+  if (!HEALTH_USERNAME || !HEALTH_PASSWORD) {
+    throw new Error('HEALTH_USERNAME and HEALTH_PASSWORD are required when HEALTH_AUTH is true');
+  }
+
+  const credentials = Buffer.from(`${HEALTH_USERNAME}:${HEALTH_PASSWORD}`).toString('base64');
+
+  return {
+    authentication: { enabled: true, expectedAuthorization: `Basic ${credentials}` },
+    backendHealthUrl: validatedEnvironment.INTERNAL_API_URL,
+    requestTimeoutMs: validatedEnvironment.HEALTH_REQUEST_TIMEOUT_MS,
+  };
+};
 
 export const isHealthRequestAuthorized = (authorization: string | null, config: HealthConfig): boolean => {
   if (!config.authentication.enabled) {
@@ -87,8 +97,9 @@ export const isHealthRequestAuthorized = (authorization: string | null, config: 
   const suppliedAuthorization = Buffer.from(authorization ?? '');
   const expectedAuthorization = Buffer.from(config.authentication.expectedAuthorization);
 
-  return (
-    suppliedAuthorization.length === expectedAuthorization.length &&
-    timingSafeEqual(suppliedAuthorization, expectedAuthorization)
-  );
+  if (suppliedAuthorization.length !== expectedAuthorization.length) {
+    return false;
+  }
+
+  return timingSafeEqual(suppliedAuthorization, expectedAuthorization);
 };

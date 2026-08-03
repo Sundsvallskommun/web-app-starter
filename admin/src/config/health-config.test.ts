@@ -46,6 +46,10 @@ describe('createHealthConfig', () => {
       'HEALTH_REQUEST_TIMEOUT_MS'
     );
   });
+
+  it('uses the default request timeout when the optional variable is empty', () => {
+    expect(createHealthConfig({ ...baseEnvironment(), HEALTH_REQUEST_TIMEOUT_MS: '' }).requestTimeoutMs).toBe(3_000);
+  });
 });
 
 describe('isHealthRequestAuthorized', () => {

@@ -35,9 +35,11 @@ const parseAuthentication = (environment: Environment): HealthAuthentication => 
     throw new Error('HEALTH_USERNAME and HEALTH_PASSWORD are required when HEALTH_AUTH is true');
   }
 
+  const credentials = `${username}:${password}`;
+
   return {
     enabled: true,
-    expectedAuthorization: `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`,
+    expectedAuthorization: `Basic ${Buffer.from(credentials).toString('base64')}`,
   };
 };
 
