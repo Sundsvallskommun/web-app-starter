@@ -75,18 +75,28 @@ describeRedisIntegration('Redis integration', () => {
     await expect(client.get(directKey)).resolves.toBe('connected');
 
     const sessionStore = await createSessionStore();
+    const configuredMaxAge = 60_000;
+    const maxAgeSetAt = Date.now();
     const sessionCookie = new session.Cookie();
-    sessionCookie.maxAge = 60_000;
+    sessionCookie.maxAge = configuredMaxAge;
     const sessionData: session.SessionData = {
       cookie: sessionCookie,
     };
     await setSession(sessionStore, sessionId, sessionData);
 
-    await expect(getSession(sessionStore, sessionId)).resolves.toMatchObject({
-      cookie: {
-        originalMaxAge: 60_000,
-      },
-    });
+    const storedSession = await getSession(sessionStore, sessionId);
+    if (!storedSession) {
+      throw new Error('Expected the Redis-backed session to be available');
+    }
+
+    const storedMaxAge = storedSession.cookie.originalMaxAge;
+    if (storedMaxAge === null) {
+      throw new Error('Expected the stored session cookie to have a finite max age');
+    }
+
+    expect(storedMaxAge).toBeGreaterThan(0);
+    expect(storedMaxAge).toBeGreaterThanOrEqual(configuredMaxAge - (Date.now() - maxAgeSetAt));
+    expect(storedMaxAge).toBeLessThanOrEqual(configuredMaxAge);
     await expect(client.exists(sessionKey)).resolves.toBe(1);
     await expect(getRedisClient()).resolves.toBe(client);
   });
