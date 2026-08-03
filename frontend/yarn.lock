@@ -228,10 +228,10 @@
   resolved "https://registry.yarnpkg.com/@biomejs/js-api/-/js-api-6.0.0.tgz#ff80584fae8db7e350a0d67f67b1d87ffb4d306f"
   integrity sha512-8HP7wexjQo5Np1J9h0B2x8L5G0GZpCacgjykxLHtvLPvF0hNqSG754oh8bxo+OSFDpVGMfSjmLO+ZY/5KbfjmQ==
 
-"@biomejs/wasm-nodejs@2.5.0":
-  version "2.5.0"
-  resolved "https://registry.yarnpkg.com/@biomejs/wasm-nodejs/-/wasm-nodejs-2.5.0.tgz#90772feb9e14c55c7bc2635fb27524e1605f6194"
-  integrity sha512-8yng33quWVLdyfNiYmr9Hq3fd9GTRqXAbhrsvpaw+iME1gd7oJBVcczucDFl/tsz69TnfrR42O/PDBoA8MSWYw==
+"@biomejs/wasm-nodejs@2.5.2":
+  version "2.5.2"
+  resolved "https://registry.yarnpkg.com/@biomejs/wasm-nodejs/-/wasm-nodejs-2.5.2.tgz#6c296eef4d08b6543498c2fdd6d29d07de0ba15d"
+  integrity sha512-B0r7jLdCmXhq4+jnx1oA0/SChLy5G283r35HJr276T+w6qgqAPAhqfnlKs+UobclAfidNDbfj9ZmcuCijaHDxQ==
 
 "@bramus/specificity@^2.4.2":
   version "2.4.2"
@@ -3147,10 +3147,10 @@ es-to-primitive@^1.3.0:
     is-date-object "^1.0.5"
     is-symbol "^1.0.4"
 
-es-toolkit@^1.48.1:
-  version "1.49.0"
-  resolved "https://registry.yarnpkg.com/es-toolkit/-/es-toolkit-1.49.0.tgz#93c5b031865792fc03cbf5bd20c132a4f976a52a"
-  integrity sha512-G5iZ6Pc/FNRY/soKZHC+TxGDD83rHUDXxzaWhGCX44vAv/tMs56WMusnm/KMNK+luUPsgA9U28cGr4RDlSzL2g==
+es-toolkit@^1.49.0:
+  version "1.50.0"
+  resolved "https://registry.yarnpkg.com/es-toolkit/-/es-toolkit-1.50.0.tgz#2665c21d0ab76286f478ece3a235463097aeabd3"
+  integrity sha512-OyZKhUVvEep9ITEiwHn8GKnMRQIVqoSIX7WnRbkWgJkllCujilqP2rD0u979tkl8wqyc8ICwlc1UBVv/Sl1G6w==
 
 es6-promise@^3.2.1:
   version "3.3.1"
@@ -4565,15 +4565,10 @@ mz@^2.7.0:
     object-assign "^4.0.1"
     thenify-all "^1.0.0"
 
-nanoid@^3.3.16:
+nanoid@^3.3.16, nanoid@^3.3.6:
   version "3.3.16"
   resolved "https://registry.yarnpkg.com/nanoid/-/nanoid-3.3.16.tgz#a04d8ec4b1f10009d2d533947aefe4293737816c"
   integrity sha512-bzlKTyNJ7+LdGIIwy8ijFpIqEQIvafahV7eYykJ8Cvh42EdJeODoJ6gUJXpQJvej1BddH8OqTXZNE/KfbWAu8Q==
-
-nanoid@^3.3.6:
-  version "3.3.8"
-  resolved "https://registry.yarnpkg.com/nanoid/-/nanoid-3.3.8.tgz#b1be3030bee36aaff18bacb375e5cce521684baf"
-  integrity sha512-WNLf5Sd8oZxOm+TzppcYk8gVOgP+l58xNy58D0nbUnOxOWRWvlcCV4kUF7ltmI6PsrLl/BgKEyS4mqsGChFN0w==
 
 nanoid@^5.1.15, nanoid@^5.1.16:
   version "5.1.16"
@@ -5752,19 +5747,19 @@ swagger-schema-official@2.0.0-bab6bed:
   resolved "https://registry.yarnpkg.com/swagger-schema-official/-/swagger-schema-official-2.0.0-bab6bed.tgz#70070468d6d2977ca5237b2e519ca7d06a2ea3fd"
   integrity sha512-rCC0NWGKr/IJhtRuPq/t37qvZHI/mH4I4sxflVM+qgVe5Z2uOCivzWaVbuioJaB61kvm5UvB7b49E+oBY0M8jA==
 
-swagger-typescript-api@^13.12.3:
-  version "13.12.3"
-  resolved "https://registry.yarnpkg.com/swagger-typescript-api/-/swagger-typescript-api-13.12.3.tgz#0d8579997a4f4e66ff1e3234a87532b8896bd671"
-  integrity sha512-t6DyvxtpSqU0TgbPCzKgobdDIR4I+7/JHQuSwT52O4puGawTvq5H8JoUkh9haJi+z7Ip7Hv2PsZlOHuvSSf5pg==
+swagger-typescript-api@^13.12.6:
+  version "13.12.6"
+  resolved "https://registry.yarnpkg.com/swagger-typescript-api/-/swagger-typescript-api-13.12.6.tgz#ca3a4957d373a18a17168cbdf8e4504b3ca9c792"
+  integrity sha512-BFnSbchubRZrxxBRKy506tHBL0//durBph8ZZohZ2RQg/BKOEGm449YMAbSM5DDTwqNpTUPhgCT59S/9d84pdQ==
   dependencies:
     "@apidevtools/swagger-parser" "12.1.0"
     "@biomejs/js-api" "6.0.0"
-    "@biomejs/wasm-nodejs" "2.5.0"
+    "@biomejs/wasm-nodejs" "2.5.2"
     "@types/swagger-schema-official" "^2.0.25"
     c12 "^3.3.4"
     citty "^0.2.2"
     consola "^3.4.2"
-    es-toolkit "^1.48.1"
+    es-toolkit "^1.49.0"
     eta "^3.5.0"
     nanoid "^5.1.16"
     openapi-types "^12.1.3"
