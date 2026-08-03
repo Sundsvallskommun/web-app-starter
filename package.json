@@ -17,8 +17,8 @@
     "knip": "yarn --cwd backend knip && yarn --cwd frontend knip && yarn --cwd admin knip",
     "test": "yarn --cwd backend test && yarn --cwd frontend test && yarn --cwd admin test",
     "build:backend": "yarn --cwd backend build",
-    "build:frontend": "cross-env NEXT_PUBLIC_APP_NAME=\"Web App Starter\" NEXT_PUBLIC_API_URL=http://localhost:3001/api DOMAIN_NAME=localhost BASE_PATH= NEXT_PUBLIC_BASE_PATH= ADMIN_URL=http://localhost:3002/ NEXT_PUBLIC_PROTECTED_ROUTES= HEALTH_AUTH=false HEALTH_USERNAME= HEALTH_PASSWORD= yarn --cwd frontend build:test",
-    "build:admin": "cross-env NEXT_PUBLIC_API_URL=http://localhost:3001/api DOMAIN_NAME=localhost BASE_PATH= NEXT_PUBLIC_BASE_PATH= HEALTH_AUTH=false HEALTH_USERNAME= HEALTH_PASSWORD= yarn --cwd admin build",
+    "build:frontend": "cross-env NEXT_PUBLIC_APP_NAME=\"Web App Starter\" NEXT_PUBLIC_API_URL=http://localhost:3001/api DOMAIN_NAME=localhost BASE_PATH= NEXT_PUBLIC_BASE_PATH= ADMIN_URL=http://localhost:3002/ NEXT_PUBLIC_PROTECTED_ROUTES= yarn --cwd frontend build:test",
+    "build:admin": "cross-env NEXT_PUBLIC_APP_NAME=\"Web App Starter\" NEXT_PUBLIC_API_URL=http://localhost:3001 NEXT_PUBLIC_API_PATH=/api DOMAIN_NAME=localhost BASE_PATH= NEXT_PUBLIC_BASE_PATH= yarn --cwd admin build",
     "build": "yarn build:backend && yarn build:frontend && yarn build:admin",
     "test:e2e": "yarn --cwd frontend test:e2e && yarn --cwd admin test:e2e",
     "verify": "yarn lint:strict && yarn format:check && yarn type-check && yarn knip && yarn test && yarn build"

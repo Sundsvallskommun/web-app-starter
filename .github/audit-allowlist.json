@@ -1,0 +1,22 @@
+{
+  "rationale": "Known advisories inherited through exact upstream dependency pins: Next 16.2.12 pins PostCSS 8.4.31, @sk-web-gui/forms 2.9.3 pins UUID 11.1.0, and the supported @sk-web-gui packages still use lodash.set, for which no patched release exists. Patchable transitive ranges are updated in the lockfiles and are not allowlisted. The audit workflow rejects every advisory outside these owner paths.",
+  "owner": "web-app-starter maintainers",
+  "removalTrigger": "Remove each entry when its upstream owner publishes a compatible patched dependency; review every remaining entry before the expiry date.",
+  "expiresOn": "2026-09-30",
+  "sharedPackages": ["frontend", "admin"],
+  "shared": [
+    { "id": "GHSA-6g55-p6wh-862q", "pathPrefixes": ["next>"] },
+    {
+      "id": "GHSA-p6mc-m468-83gw",
+      "pathPrefixes": ["@sk-web-gui/core>", "@sk-web-gui/react>"]
+    },
+    { "id": "GHSA-qx2v-qp2m-jg93", "pathPrefixes": ["next>"] },
+    { "id": "GHSA-r28c-9q8g-f849", "pathPrefixes": ["next>"] },
+    { "id": "GHSA-w5hq-g745-h8pq", "pathPrefixes": ["@sk-web-gui/react>"] }
+  ],
+  "packages": {
+    "backend": [],
+    "frontend": [],
+    "admin": []
+  }
+}

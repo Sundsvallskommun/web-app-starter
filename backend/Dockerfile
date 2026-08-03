@@ -9,7 +9,7 @@ WORKDIR /app
 FROM base AS dependencies
 
 COPY package.json yarn.lock ./
-RUN yarn install --frozen-lockfile --non-interactive
+RUN yarn install --frozen-lockfile --ignore-scripts --non-interactive
 
 FROM dependencies AS builder
 
@@ -21,7 +21,7 @@ FROM base AS production-dependencies
 ENV NODE_ENV=production
 
 COPY package.json yarn.lock ./
-RUN yarn install --frozen-lockfile --production=true --non-interactive \
+RUN yarn install --frozen-lockfile --ignore-scripts --production=true --non-interactive \
   && yarn cache clean
 
 FROM base AS runner
@@ -33,13 +33,14 @@ COPY --from=production-dependencies --chown=root:root /app/node_modules ./node_m
 COPY --from=builder --chown=root:root /app/dist ./dist
 COPY --chown=root:root package.json ./package.json
 
-# OpenShift assigns an arbitrary UID that is a member of group 0. Keep the
-# application read-only and grant that group write access only to runtime data.
-RUN mkdir -p /app/data/logs /app/data/sessions \
-  && chown -R node:root /app/data \
+# UID 1001 preserves ownership compatibility with volumes created by previous
+# releases. Group 0 write access also supports OpenShift's arbitrary runtime UID.
+RUN useradd --uid 1001 --gid 0 --no-create-home --home-dir /nonexistent --shell /usr/sbin/nologin app \
+  && mkdir -p /app/data/logs /app/data/sessions \
+  && chown -R 1001:0 /app/data \
   && chmod -R g=u /app/data
 
-USER node
+USER 1001:0
 
 EXPOSE 3000
 

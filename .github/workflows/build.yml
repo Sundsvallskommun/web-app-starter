@@ -26,7 +26,7 @@ jobs:
           cache: yarn
           cache-dependency-path: backend/yarn.lock
       - name: Install dependencies
-        run: yarn --frozen-lockfile --silent
+        run: yarn --frozen-lockfile --ignore-scripts --silent
       - name: Run build
         run: yarn build
 
@@ -59,7 +59,9 @@ jobs:
           cache: yarn
           cache-dependency-path: frontend/yarn.lock
       - name: Install dependencies
-        run: yarn --frozen-lockfile --silent
+        run: yarn --frozen-lockfile --ignore-scripts --silent
+      - name: Verify Next image optimization
+        run: node ../.github/scripts/verify-next-sharp.cjs
       - name: Run build
         run: yarn build:test
 
@@ -72,7 +74,9 @@ jobs:
         working-directory: admin
     name: Build Admin
     env:
-      NEXT_PUBLIC_API_URL: http://localhost:3001/api
+      NEXT_PUBLIC_APP_NAME: Web App Starter Admin
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+      NEXT_PUBLIC_API_PATH: /api
       DOMAIN_NAME: localhost
       BASE_PATH: ''
       NEXT_PUBLIC_BASE_PATH: ''
@@ -89,6 +93,8 @@ jobs:
           cache: yarn
           cache-dependency-path: admin/yarn.lock
       - name: Install dependencies
-        run: yarn --frozen-lockfile --silent
+        run: yarn --frozen-lockfile --ignore-scripts --silent
+      - name: Verify Next image optimization
+        run: node ../.github/scripts/verify-next-sharp.cjs
       - name: Run build
         run: yarn build

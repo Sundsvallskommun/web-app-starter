@@ -10,6 +10,7 @@ const REDIS_MAX_RECONNECT_ATTEMPTS = 5;
 
 let redisClient: RedisClient | null = null;
 let redisConnection: Promise<RedisClient> | null = null;
+let closingRedisClient: RedisClient | null = null;
 
 class RedisConnectionError extends Error {
   public readonly cause: unknown;
@@ -25,46 +26,59 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-function reconnectStrategy(retries: number): number | Error {
-  if (retries >= REDIS_MAX_RECONNECT_ATTEMPTS) {
-    return new Error(`Redis reconnect attempts exhausted after ${retries} retries`);
-  }
-
-  return Math.min(retries * 100, 3_000);
-}
-
 function createConfiguredClient(): RedisClient {
   if (!REDIS_CONFIG.enabled) {
     throw new Error('Cannot create a Redis client without Redis configuration');
   }
 
   const { host, password, port } = REDIS_CONFIG;
+  let hasConnected = false;
   const client = createClient({
+    disableOfflineQueue: true,
     socket: {
       host,
       port,
       connectTimeout: REDIS_CONNECT_TIMEOUT_MS,
-      reconnectStrategy,
+      reconnectStrategy: retries => {
+        if (!hasConnected && retries >= REDIS_MAX_RECONNECT_ATTEMPTS) {
+          return new Error(`Redis reconnect attempts exhausted after ${retries} retries`);
+        }
+
+        return Math.min(retries * 100, 3_000);
+      },
     },
     ...(password ? { password } : {}),
   });
 
   client.on('error', (error: unknown) => logger.error(`Redis error: ${errorMessage(error)}`));
   client.on('connect', () => logger.info(`Connected to Redis (${host}:${port})`));
+  client.on('ready', () => {
+    hasConnected = true;
+  });
   client.on('reconnecting', () => logger.info('Redis reconnecting'));
 
   return client;
 }
 
-async function connectRedis(): Promise<RedisClient> {
-  const client = createConfiguredClient();
-
+async function connectRedis(client: RedisClient, disposeOnFailure: boolean): Promise<RedisClient> {
   try {
     await client.connect();
-    redisClient = client;
     return client;
   } catch (error: unknown) {
-    client.destroy();
+    if (disposeOnFailure) {
+      if (redisClient === client) {
+        redisClient = null;
+      }
+
+      if (client.isOpen) {
+        try {
+          client.destroy();
+        } catch (destroyError: unknown) {
+          logger.warn(`Failed to destroy the Redis client after a connection error: ${errorMessage(destroyError)}`);
+        }
+      }
+    }
+
     throw new RedisConnectionError(error);
   }
 }
@@ -79,17 +93,19 @@ export async function getRedisClient(): Promise<RedisClient | null> {
     return null;
   }
 
-  if (redisClient?.isOpen) {
-    return redisClient;
-  }
-
-  redisClient = null;
-
   if (redisConnection) {
     return redisConnection;
   }
 
-  const connection = connectRedis();
+  if (redisClient?.isOpen) {
+    return redisClient;
+  }
+
+  const disposeOnFailure = redisClient === null;
+  const client = redisClient ?? createConfiguredClient();
+  redisClient = client;
+
+  const connection = connectRedis(client, disposeOnFailure);
   redisConnection = connection;
 
   try {
@@ -101,8 +117,16 @@ export async function getRedisClient(): Promise<RedisClient | null> {
   }
 }
 
+/**
+ * Reports whether Redis-backed dependencies can accept commands immediately.
+ * Redis is optional, so an intentionally local file-backed setup is ready.
+ */
+export function isRedisReady(): boolean {
+  return !REDIS_CONFIG.enabled || redisClient?.isReady === true;
+}
+
 export async function closeRedisClient(): Promise<void> {
-  let client = redisClient;
+  let client = redisClient ?? closingRedisClient;
 
   if (!client && redisConnection) {
     try {
@@ -113,8 +137,26 @@ export async function closeRedisClient(): Promise<void> {
   }
 
   redisClient = null;
+  closingRedisClient = client;
+
+  try {
+    if (client?.isOpen) {
+      await client.close();
+    }
+  } finally {
+    if (closingRedisClient === client) {
+      closingRedisClient = null;
+    }
+  }
+}
+
+/** Immediately releases Redis resources after the graceful shutdown deadline. */
+export function destroyRedisClient(): void {
+  const client = redisClient ?? closingRedisClient;
+  redisClient = null;
+  closingRedisClient = null;
 
   if (client?.isOpen) {
-    await client.close();
+    client.destroy();
   }
 }

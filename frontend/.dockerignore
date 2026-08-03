@@ -6,7 +6,12 @@
 node_modules
 .next
 coverage
+e2e
 playwright-report
+src/**/*.spec.ts
+src/**/*.spec.tsx
+src/**/*.test.ts
+src/**/*.test.tsx
 test-results
 *.log
 

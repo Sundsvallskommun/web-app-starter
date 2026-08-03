@@ -8,6 +8,8 @@
 /dist
 /coverage
 /data
+src/**/*.spec.ts
+src/**/*.test.ts
 *.log
 
 # Docker metadata is not part of the application image

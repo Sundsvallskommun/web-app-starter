@@ -52,8 +52,10 @@ services:
         ADMIN_URL: ${ADMIN_URL-}
         NEXT_PUBLIC_PROTECTED_ROUTES: ${NEXT_PUBLIC_PROTECTED_ROUTES-}
     environment:
-      # Runtime values used by server-side health handling.
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:?err}
+      # Server-only backend address. The default Compose network resolves the
+      # backend service name; do not use the browser-facing localhost URL here.
+      INTERNAL_API_URL: "http://backend:3000${BASE_URL_PREFIX:?err}"
       HEALTH_AUTH: ${HEALTH_AUTH-false}
       HEALTH_USERNAME: ${HEALTH_USERNAME-}
       HEALTH_PASSWORD: ${HEALTH_PASSWORD-}
+      HEALTH_REQUEST_TIMEOUT_MS: ${HEALTH_REQUEST_TIMEOUT_MS-3000}

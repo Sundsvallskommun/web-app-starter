@@ -26,7 +26,7 @@ jobs:
           cache: yarn
           cache-dependency-path: backend/yarn.lock
       - name: Install dependencies
-        run: yarn --frozen-lockfile --silent
+        run: yarn --frozen-lockfile --ignore-scripts --silent
       - name: Run type check
         run: yarn type-check
 
@@ -48,7 +48,7 @@ jobs:
           cache: yarn
           cache-dependency-path: frontend/yarn.lock
       - name: Install dependencies
-        run: yarn --frozen-lockfile --silent
+        run: yarn --frozen-lockfile --ignore-scripts --silent
       - name: Generate middleware envs
         run: yarn generate:middleware-envs
       - name: Run type check
@@ -72,6 +72,6 @@ jobs:
           cache: yarn
           cache-dependency-path: admin/yarn.lock
       - name: Install dependencies
-        run: yarn --frozen-lockfile --silent
+        run: yarn --frozen-lockfile --ignore-scripts --silent
       - name: Run type check
         run: yarn type-check

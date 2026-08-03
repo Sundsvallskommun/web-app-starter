@@ -1,0 +1,67 @@
+name: Dependency Security
+
+on:
+  pull_request:
+  push:
+    branches:
+      - develop
+      - main
+  schedule:
+    - cron: "17 4 * * 1"
+
+jobs:
+  production-audit:
+    name: Production Audit (${{ matrix.package }})
+    if: github.event_name != 'schedule'
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - backend
+          - frontend
+          - admin
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: Check production dependency advisories
+        run: bash .github/scripts/check-yarn-audit.sh ${{ matrix.package }}
+
+  scheduled-production-audit:
+    name: Scheduled Production Audit (${{ matrix.branch }}/${{ matrix.package }})
+    if: github.event_name == 'schedule'
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        branch:
+          - develop
+          - main
+        package:
+          - backend
+          - frontend
+          - admin
+    steps:
+      - name: Checkout audit policy
+        uses: actions/checkout@v6
+        with:
+          path: audit-policy
+      - name: Checkout ${{ matrix.branch }}
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ matrix.branch }}
+          path: target
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: Check production dependency advisories
+        run: bash audit-policy/.github/scripts/check-yarn-audit.sh ${{ matrix.package }} "$GITHUB_WORKSPACE/target"

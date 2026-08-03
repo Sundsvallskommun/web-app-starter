@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { randomInt, randomUUID } from 'node:crypto';
 
 import { CLIENT_KEY, CLIENT_SECRET, REDIS_CONFIG } from '@config';
 import { logger } from '@utils/logger';
@@ -80,9 +80,10 @@ function getCacheLifetimeMs(expiresInSeconds: number): number {
 
 function getRetryDelayMs(attempt: number): number {
   const exponentialDelayMs = Math.min(LOCK_RETRY_INITIAL_MS * 2 ** attempt, LOCK_RETRY_MAX_MS);
-  const jitterMs = exponentialDelayMs * LOCK_RETRY_JITTER_FACTOR * Math.random();
+  const jitterRangeMs = Math.floor(exponentialDelayMs * LOCK_RETRY_JITTER_FACTOR) + 1;
+  const jitterMs = randomInt(jitterRangeMs);
 
-  return Math.floor(exponentialDelayMs + jitterMs);
+  return exponentialDelayMs + jitterMs;
 }
 
 function getErrorMessage(error: unknown): string {

@@ -1,0 +1,113 @@
+name: Containers
+
+on:
+  pull_request:
+  push:
+    branches:
+      - develop
+      - main
+
+jobs:
+  validate-compose:
+    name: Validate Docker Compose
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    env:
+      ADMIN_URL: http://localhost:3002
+      API_BASE_URL: https://api.example.test
+      BASE_URL_PREFIX: /api
+      CLIENT_KEY: test-client
+      CLIENT_SECRET: test-secret
+      COMPOSE_PROJECT_NAME: web-app-starter
+      DOMAIN_NAME: localhost
+      INTERNAL_API_URL: http://backend:3000/api
+      NEXT_PUBLIC_API_PATH: /api
+      NEXT_PUBLIC_API_URL: http://localhost:3001/api
+      NEXT_PUBLIC_APP_NAME: Web App Starter
+      NODE_ENV: test
+      ORIGIN: http://localhost:3000
+      SAML_CALLBACK_URL: http://localhost:3001/api/saml/login/callback
+      SAML_ENTRY_SSO: https://idp.example.test/sso
+      SAML_FAILURE_REDIRECT: http://localhost:3000/login?error=true
+      SAML_IDP_PUBLIC_CERT: test-certificate
+      SAML_ISSUER: http://localhost:3001
+      SAML_LOGOUT_CALLBACK_URL: http://localhost:3001/api/saml/logout/callback
+      SAML_LOGOUT_REDIRECT: http://localhost:3000
+      SAML_PRIVATE_KEY: test-private-key
+      SAML_PUBLIC_KEY: test-public-key
+      SAML_SUCCESS_REDIRECT: http://localhost:3000
+      SECRET_KEY: test-session-secret
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Validate merged Compose configuration
+        run: docker compose -f docker-compose.yml -f docker-compose.override.yml config --quiet
+
+  build-images:
+    name: Build ${{ matrix.package }} image
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - package: backend
+            context: backend
+            build-args: ""
+          - package: frontend
+            context: frontend
+            build-args: >-
+              --build-arg NEXT_PUBLIC_APP_NAME=web-app-starter
+              --build-arg NEXT_PUBLIC_API_URL=http://localhost:3001/api
+              --build-arg DOMAIN_NAME=localhost
+              --build-arg BASE_PATH=
+              --build-arg NEXT_PUBLIC_BASE_PATH=
+              --build-arg ADMIN_URL=http://localhost:3002
+              --build-arg NEXT_PUBLIC_PROTECTED_ROUTES=
+          - package: admin
+            context: admin
+            build-args: >-
+              --build-arg NEXT_PUBLIC_APP_NAME=web-app-starter-admin
+              --build-arg NEXT_PUBLIC_API_URL=http://localhost:3001
+              --build-arg NEXT_PUBLIC_API_PATH=/api
+              --build-arg DOMAIN_NAME=localhost
+              --build-arg BASE_PATH=
+              --build-arg NEXT_PUBLIC_BASE_PATH=
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Check Dockerfile
+        run: docker build --check ${{ matrix.build-args }} --file ${{ matrix.context }}/Dockerfile ${{ matrix.context }}
+      - name: Build image
+        run: docker build ${{ matrix.build-args }} --tag web-app-starter-${{ matrix.package }}:ci --file ${{ matrix.context }}/Dockerfile ${{ matrix.context }}
+      - name: Verify backend runtime image
+        if: matrix.package == 'backend'
+        run: |
+          test "$(docker image inspect --format '{{.Config.User}}' web-app-starter-backend:ci)" = "1001:0"
+          docker run --rm web-app-starter-backend:ci \
+            sh -c 'test -z "$(find /app/dist -type f \( -name "*.test.*" -o -name "*.spec.*" \) -print -quit)"'
+      - name: Verify Next runtime as arbitrary UID
+        if: matrix.package != 'backend'
+        run: |
+          docker run --rm --user 12345:0 web-app-starter-${{ matrix.package }}:ci \
+            sh -c 'touch /app/.next/cache/arbitrary-uid-write-test'
+          docker run --rm --user 12345:0 \
+            --volume "$PWD/.github/scripts/verify-next-sharp.cjs:/tmp/verify-next-sharp.cjs:ro" \
+            web-app-starter-${{ matrix.package }}:ci node /tmp/verify-next-sharp.cjs
+      - name: Verify backend data-volume compatibility
+        if: matrix.package == 'backend'
+        run: |
+          legacy_volume=web-app-starter-legacy-${{ github.run_id }}
+          openshift_volume=web-app-starter-openshift-${{ github.run_id }}
+          trap 'docker volume rm --force "$legacy_volume" "$openshift_volume" >/dev/null' EXIT
+
+          docker volume create "$legacy_volume"
+          docker volume create "$openshift_volume"
+          docker run --rm --user 0:0 --volume "$legacy_volume:/data" node:24-slim \
+            sh -c 'chown 1001:1001 /data && chmod 0755 /data && touch /data/legacy-marker'
+          docker run --rm --volume "$legacy_volume:/app/data" web-app-starter-backend:ci \
+            sh -c 'touch /app/data/legacy-volume-write-test'
+          docker run --rm --user 12345:0 --volume "$openshift_volume:/app/data" web-app-starter-backend:ci \
+            sh -c 'touch /app/data/arbitrary-uid-write-test'

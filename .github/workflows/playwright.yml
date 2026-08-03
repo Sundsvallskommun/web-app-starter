@@ -26,9 +26,9 @@ jobs:
           cache: yarn
           cache-dependency-path: frontend/yarn.lock
       - name: Install dependencies
-        run: yarn --frozen-lockfile --silent
+        run: yarn --frozen-lockfile --ignore-scripts --silent
       - name: Install Playwright browser (chromium)
-        run: yarn playwright install --with-deps chromium
+        run: ./node_modules/.bin/playwright install --with-deps chromium
       - name: Run Playwright tests
         run: yarn test:e2e
       - name: Upload Playwright report
@@ -57,9 +57,9 @@ jobs:
           cache: yarn
           cache-dependency-path: admin/yarn.lock
       - name: Install dependencies
-        run: yarn --frozen-lockfile --silent
+        run: yarn --frozen-lockfile --ignore-scripts --silent
       - name: Install Playwright browser (chromium)
-        run: yarn playwright install --with-deps chromium
+        run: ./node_modules/.bin/playwright install --with-deps chromium
       - name: Run Playwright tests
         run: yarn test:e2e
       - name: Upload Playwright report

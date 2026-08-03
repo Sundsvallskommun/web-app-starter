@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "exclude": [
+    "node_modules",
+    "src/http",
+    "src/logs",
+    "src/tests",
+    "src/**/*.test.ts",
+    "src/**/*.spec.ts",
+    "src/swagger-typescript-api.ts"
+  ]
+}

@@ -170,12 +170,11 @@ describe('ApiTokenService', () => {
     redis.get.mockResolvedValueOnce(null).mockResolvedValueOnce(serializeCachedToken('token-from-lock-owner', Date.now() + 60_000));
     redis.set.mockResolvedValue(null);
     mockedGetRedisClient.mockResolvedValue(redis.client);
-    vi.spyOn(Math, 'random').mockReturnValue(0);
 
     const service = new ApiTokenService();
     const tokenPromise = service.getToken();
 
-    await vi.advanceTimersByTimeAsync(100);
+    await vi.advanceTimersByTimeAsync(125);
     await expect(tokenPromise).resolves.toBe('token-from-lock-owner');
     expect(redis.set).toHaveBeenCalledOnce();
     expect(mockedAxios).not.toHaveBeenCalled();
@@ -186,7 +185,6 @@ describe('ApiTokenService', () => {
     redis.get.mockResolvedValue(null);
     redis.set.mockResolvedValue(null);
     mockedGetRedisClient.mockResolvedValue(redis.client);
-    vi.spyOn(Math, 'random').mockReturnValue(0);
 
     const service = new ApiTokenService();
     const tokenPromise = service.getToken();
