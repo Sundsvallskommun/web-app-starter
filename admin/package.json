@@ -26,7 +26,6 @@
     "analyze:browser": "cross-env BUNDLE_ANALYZE=browser next build"
   },
   "dependencies": {
-    "@next/bundle-analyzer": "^16.2.9",
     "@sk-web-gui/core": "4.6.0",
     "@sk-web-gui/react": "3.1.1",
     "axios": "^1.18.1",
@@ -35,18 +34,19 @@
     "envalid": "^8.1.1",
     "i18next": "^26.3.3",
     "lucide-react": "1.22.0",
-    "next": "16.2.9",
+    "next": "16.2.12",
     "next-i18next": "^16.0.7",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-hook-form": "^7.80.0",
     "react-i18next": "^17.0.8",
     "sass": "^1.94.0",
-    "sharp": "^0.35.2",
+    "sharp": "^0.35.3",
     "underscore.string": "^3.3.6",
     "zustand": "^5.0.11"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^16.2.12",
     "@playwright/test": "^1.61.1",
     "@tailwindcss/container-queries": "^0.1.1",
     "@testing-library/dom": "^10.4.0",
@@ -62,7 +62,7 @@
     "cross-env": "^10",
     "dotenv": "^17.4.2",
     "eslint": "^9.39.4",
-    "eslint-config-next": "16.2.9",
+    "eslint-config-next": "16.2.12",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-simple-import-sort": "^13",
     "eslint-plugin-unused-imports": "^4.4.1",
@@ -81,5 +81,8 @@
   "browserslist": [
     "defaults and fully supports es6-module",
     "maintained node versions"
-  ]
+  ],
+  "resolutions": {
+    "next/sharp": "0.35.3"
+  }
 }

@@ -26,7 +26,9 @@ export default defineConfig({
     timeout: 120_000,
     env: {
       PORT: String(port),
-      NEXT_PUBLIC_API_URL: 'http://localhost:3001/api',
+      NEXT_PUBLIC_APP_NAME: 'Web App Starter Admin',
+      NEXT_PUBLIC_API_URL: 'http://localhost:3001',
+      NEXT_PUBLIC_API_PATH: '/api',
       DOMAIN_NAME: 'localhost',
       BASE_PATH: '',
       NEXT_PUBLIC_BASE_PATH: '',

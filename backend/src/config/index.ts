@@ -9,9 +9,49 @@ config({ path: `.env.${process.env.NODE_ENV ?? 'development'}.local`, quiet: tru
 
 const env = process.env;
 
+type RedisConfig = { enabled: false } | { enabled: true; host: string; keyPrefix: string; port: number; password?: string };
+
+function parseRedisPort(value: string): number {
+  const parsedPort = Number(value);
+
+  if (!/^\d+$/.test(value) || !Number.isInteger(parsedPort) || parsedPort < 1 || parsedPort > 65_535) {
+    throw new Error('REDIS_PORT must be an integer between 1 and 65535');
+  }
+
+  return parsedPort;
+}
+
+export function createRedisConfig(environment: NodeJS.ProcessEnv): RedisConfig {
+  const redisHost = environment.REDIS_HOST?.trim() ?? '';
+  const redisKeyPrefix = environment.REDIS_KEY_PREFIX?.trim() ?? '';
+  const redisPort = environment.REDIS_PORT?.trim() ?? '';
+  const redisPassword = environment.REDIS_PASSWORD ?? '';
+
+  if (!redisHost) {
+    if (redisPort || redisPassword) {
+      throw new Error('REDIS_HOST is required when REDIS_PORT or REDIS_PASSWORD is configured');
+    }
+
+    return { enabled: false };
+  }
+
+  if (!redisKeyPrefix) {
+    throw new Error('REDIS_KEY_PREFIX is required when REDIS_HOST is configured');
+  }
+
+  const connection = {
+    host: redisHost,
+    keyPrefix: redisKeyPrefix,
+    port: parseRedisPort(redisPort || '6379'),
+  };
+
+  return redisPassword ? { enabled: true, ...connection, password: redisPassword } : { enabled: true, ...connection };
+}
+
+export const REDIS_CONFIG = createRedisConfig(env);
+
 export const CREDENTIALS = env.CREDENTIALS === 'true';
 export const SWAGGER_ENABLED = env.SWAGGER_ENABLED === 'true';
-export const SESSION_MEMORY = env.SESSION_MEMORY === 'true';
 
 // The values below are required at runtime: validateEnv() (called at startup in server.ts)
 // exits the process if any are missing, so typing them as `string` is honest for the rest

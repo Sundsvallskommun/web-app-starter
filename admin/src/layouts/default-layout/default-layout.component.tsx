@@ -93,6 +93,7 @@ export default function DefaultLayout({ title, postTitle, headerSubtitle, childr
                             {Object.keys(colorSchemeIcons).map((scheme) => (
                               <PopupMenu.Item key={`cs-${scheme}`}>
                                 <button
+                                  type="button"
                                   onClick={() => {
                                     setColorScheme(scheme as ColorSchemeMode);
                                   }}

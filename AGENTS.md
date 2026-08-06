@@ -96,6 +96,11 @@ one of these, confirm the blocker below has actually cleared — don't rediscove
   once those consumers ship `0.15`-compatible peers.
 - **`@types/node` → stay on `^24`** (all packages). Types track the Node 24 runtime
   (`engines.node`, `.nvmrc`); leading them to 26 lets `tsc` green-light APIs absent at runtime.
+- **`sharp` → resolve Next's copy to `0.35.x`** (frontend + admin). Next 16.2.12 still
+  requests vulnerable `sharp ^0.34.5`, and that line has no patched release. The Yarn
+  resolution deliberately crosses Next's declared range; CI exercises Next's own image
+  optimizer against the resolved Sharp version. Remove the resolution once Next declares
+  support for a non-vulnerable Sharp range, not merely to silence Yarn's warning.
 - **TypeScript 6** (all packages) sits under the `<6.1.0` ceiling allowed by `typescript-eslint`.
   `baseUrl` is gone (path-map targets are `./`-relative); backend uses `moduleResolution: nodenext`
   with an explicit `rootDir: src`.

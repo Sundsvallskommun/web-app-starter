@@ -18,6 +18,20 @@ export default defineConfig({
       reporter: ['text', 'lcov'],
       include: ['src/**/*.{ts,tsx}'],
       exclude: ['src/**/data-contracts/**', 'src/**/*.{test,spec}.{ts,tsx}', 'src/**/*.d.ts'],
+      thresholds: {
+        'src/app/api/health/up/route.ts': {
+          branches: 50,
+          functions: 100,
+          lines: 90,
+          statements: 90,
+        },
+        'src/config/health-config.ts': {
+          branches: 75,
+          functions: 100,
+          lines: 90,
+          statements: 90,
+        },
+      },
     },
   },
 });

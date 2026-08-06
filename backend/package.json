@@ -8,7 +8,7 @@
     "start": "cross-env NODE_ENV=production node dist/server.js",
     "dev": "cross-env NODE_ENV=development nodemon",
     "generate:contracts": "cross-env NODE_ENV=development ts-node ./src/swagger-typescript-api.ts",
-    "build": "tsc && tsc-alias",
+    "build": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\" && tsc --project tsconfig.build.json && tsc-alias -p tsconfig.build.json",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -31,6 +31,7 @@
     "class-validator": "^0.14.3",
     "class-validator-jsonschema": "^5.0.1",
     "compression": "^1.7.5",
+    "connect-redis": "^9.0.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
@@ -40,10 +41,10 @@
     "express-session": "^1.18.1",
     "helmet": "^8.0.0",
     "hpp": "^0.2.3",
-    "memorystore": "^1.6.7",
     "morgan": "^1.10.1",
     "passport": "^0.7.0",
     "qs": "^6.15.3",
+    "redis": "^5.11.0",
     "reflect-metadata": "^0.2.2",
     "routing-controllers": "^0.11.3",
     "routing-controllers-openapi": "^5.0.1",
@@ -87,6 +88,8 @@
   },
   "resolutions": {
     "@types/express": "^5.0.0",
-    "@types/express-serve-static-core": "^5.1.1"
+    "@types/express-serve-static-core": "^5.1.1",
+    "brace-expansion": "5.0.9",
+    "routing-controllers/**/body-parser": "1.20.6"
   }
 }

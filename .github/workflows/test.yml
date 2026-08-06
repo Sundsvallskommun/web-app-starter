@@ -16,6 +16,16 @@ jobs:
       run:
         working-directory: backend
     name: Unit Tests Backend
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -26,9 +36,16 @@ jobs:
           cache: yarn
           cache-dependency-path: backend/yarn.lock
       - name: Install dependencies
-        run: yarn --frozen-lockfile --silent
+        run: yarn --frozen-lockfile --ignore-scripts --silent
       - name: Run unit tests
-        run: yarn test
+        run: yarn test:coverage
+      - name: Run Redis integration tests
+        env:
+          REDIS_INTEGRATION: "true"
+          REDIS_HOST: 127.0.0.1
+          REDIS_PORT: "6379"
+          REDIS_KEY_PREFIX: ci:test
+        run: ./node_modules/.bin/vitest run src/utils/redis.integration.test.ts
 
   test-frontend:
     permissions:
@@ -48,11 +65,11 @@ jobs:
           cache: yarn
           cache-dependency-path: frontend/yarn.lock
       - name: Install dependencies
-        run: yarn --frozen-lockfile --silent
+        run: yarn --frozen-lockfile --ignore-scripts --silent
       - name: Generate middleware envs
         run: yarn generate:middleware-envs
       - name: Run unit tests
-        run: yarn test
+        run: yarn test:coverage
 
   test-admin:
     permissions:
@@ -72,6 +89,6 @@ jobs:
           cache: yarn
           cache-dependency-path: admin/yarn.lock
       - name: Install dependencies
-        run: yarn --frozen-lockfile --silent
+        run: yarn --frozen-lockfile --ignore-scripts --silent
       - name: Run unit tests
-        run: yarn test
+        run: yarn test:coverage

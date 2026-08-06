@@ -1,46 +1,75 @@
-# Install dependencies only when needed
-FROM node:24-alpine AS deps
-# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
-RUN apk add --no-cache libc6-compat
-WORKDIR /app
-COPY package.json yarn.lock ./
-RUN yarn install --frozen-lockfile
+FROM node:24-slim AS dependencies
 
-# Rebuild the source code only when needed
-FROM node:24-alpine AS builder
 WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+
+COPY package.json yarn.lock ./
+RUN yarn install --frozen-lockfile --ignore-scripts --non-interactive
+
+FROM node:24-slim AS builder
+
+WORKDIR /app
+
+COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .
 
-ENV NEXT_TELEMETRY_DISABLED 1
-RUN yarn build
-# Remove all the development dependencies since we don't
-# need them to run the actual server.
-RUN rm -rf node_modules
-RUN yarn install --production --frozen-lockfile --ignore-scripts --prefer-offline
+# Next.js embeds public values at build time. Require deployment-specific
+# values instead of copying a local .env file into the image context.
+ARG NEXT_PUBLIC_APP_NAME
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_API_PATH
+ARG DOMAIN_NAME
+ARG BASE_PATH
+ARG NEXT_PUBLIC_BASE_PATH
 
-# Production image, copy all the files and run next
-FROM node:24-alpine AS runner
+ENV NEXT_PUBLIC_APP_NAME="${NEXT_PUBLIC_APP_NAME}" \
+  NEXT_PUBLIC_API_URL="${NEXT_PUBLIC_API_URL}" \
+  NEXT_PUBLIC_API_PATH="${NEXT_PUBLIC_API_PATH}" \
+  DOMAIN_NAME="${DOMAIN_NAME}" \
+  BASE_PATH="${BASE_PATH}" \
+  NEXT_PUBLIC_BASE_PATH="${NEXT_PUBLIC_BASE_PATH}" \
+  NEXT_TELEMETRY_DISABLED=1
+
+RUN : "${NEXT_PUBLIC_APP_NAME:?Pass NEXT_PUBLIC_APP_NAME as a build argument}" \
+  && : "${NEXT_PUBLIC_API_URL:?Pass NEXT_PUBLIC_API_URL as a build argument}" \
+  && yarn build
+
+FROM node:24-slim AS runner
+
 WORKDIR /app
 
-ENV NODE_ENV production
-ENV NEXT_TELEMETRY_DISABLED 1
+ARG NEXT_PUBLIC_APP_NAME
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_API_PATH
+ARG NEXT_PUBLIC_BASE_PATH
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+ENV NODE_ENV=production \
+  HOSTNAME=0.0.0.0 \
+  NEXT_PUBLIC_APP_NAME="${NEXT_PUBLIC_APP_NAME}" \
+  NEXT_PUBLIC_API_URL="${NEXT_PUBLIC_API_URL}" \
+  NEXT_PUBLIC_API_PATH="${NEXT_PUBLIC_API_PATH}" \
+  NEXT_PUBLIC_BASE_PATH="${NEXT_PUBLIC_BASE_PATH}" \
+  NEXT_TELEMETRY_DISABLED=1 \
+  PORT=3000
 
-COPY --from=builder /app/next.config.js ./
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/package.json ./package.json
+COPY --from=builder --chown=root:root /app/public ./public
+COPY --from=builder --chown=root:root /app/.next/standalone ./
+COPY --from=builder --chown=root:root /app/.next/static ./.next/static
 
-# Automatically leverage output traces to reduce image size 
-# https://nextjs.org/docs/advanced-features/output-file-tracing
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# Next's output tracing can omit Sharp's dynamically loaded native libvips
+# payload. Copy the packages selected for the build platform in full so image
+# optimization works on every supported architecture at runtime.
+COPY --from=dependencies --chown=root:root /app/node_modules/sharp ./node_modules/sharp
+COPY --from=dependencies --chown=root:root /app/node_modules/@img ./node_modules/@img
 
-USER nextjs
+# UID 1001 stays compatible with earlier images; group 0 write access supports
+# OpenShift's arbitrary runtime UID. Only Next's caches are writable.
+RUN useradd --uid 1001 --gid 0 --no-create-home --home-dir /nonexistent --shell /usr/sbin/nologin app \
+  && mkdir -p /app/.next/cache \
+  && chown -R 1001:0 /app/.next/cache \
+  && chmod -R g=u /app/.next/cache
+
+USER 1001:0
 
 EXPOSE 3000
-ENV PORT 3000
 
 CMD ["node", "server.js"]
