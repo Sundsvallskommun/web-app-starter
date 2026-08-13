@@ -4,10 +4,12 @@ import {
   APP_NAME,
   BASE_URL_PREFIX,
   CREDENTIALS,
+  ENVIRONMENT,
   LOG_FORMAT,
   NODE_ENV,
   ORIGIN,
   PORT,
+  SAML_AUDIENCE,
   SAML_CALLBACK_URL,
   SAML_ENTRY_SSO,
   SAML_FAILURE_REDIRECT,
@@ -18,6 +20,7 @@ import {
   SAML_PUBLIC_KEY,
   SAML_SUCCESS_REDIRECT,
   SECRET_KEY,
+  SESSION_MAX_AGE_MS,
   SWAGGER_ENABLED,
 } from '@config';
 import errorMiddleware from '@middlewares/error.middleware';
@@ -69,10 +72,10 @@ const samlStrategy = new Strategy(
     // Identity Provider's public key
     idpCert: SAML_IDP_PUBLIC_CERT,
     issuer: SAML_ISSUER,
-    wantAssertionsSigned: false,
+    wantAssertionsSigned: true,
     wantAuthnResponseSigned: false,
-    acceptedClockSkewMs: 1000,
-    audience: false,
+    acceptedClockSkewMs: 5000,
+    audience: SAML_AUDIENCE || SAML_ISSUER,
     logoutCallbackUrl: SAML_LOGOUT_CALLBACK_URL,
   },
   function (samlProfile: SamlProfile | null, done: VerifiedCallback) {
@@ -197,6 +200,15 @@ class App {
         resave: false,
         saveUninitialized: false,
         store: this.sessionStore,
+        cookie: {
+          httpOnly: true,
+          // Off for local http development, where the browser would otherwise drop the cookie.
+          secure: this.env === 'production' && ENVIRONMENT !== 'LOCAL',
+          // 'lax' still sends the cookie on the top-level redirect back from the IdP, which is
+          // why login/logout must be full page loads rather than client-side navigations.
+          sameSite: 'lax',
+          maxAge: SESSION_MAX_AGE_MS,
+        },
       }),
     );
 
@@ -350,6 +362,7 @@ class App {
 
       const authenticate = passport.authenticate('saml', (err: Error | null, user?: Express.User | false) => {
         if (err) {
+          logger.warn(`SAML login callback failed: ${err.name}: ${err.message}`);
           const queries = new URLSearchParams(failureRedirect.searchParams);
           if (err.name) {
             queries.append('failMessage', err.name);

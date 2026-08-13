@@ -28,6 +28,8 @@ services:
       ORIGIN: ${ORIGIN:?err}
       # Optionals
       NODE_ENV: ${NODE_ENV-production}
+      # Set to LOCAL only when serving over plain http; it turns off the Secure session cookie.
+      ENVIRONMENT: ${ENVIRONMENT-}
       SWAGGER_ENABLED: ${SWAGGER_ENABLED-false}
       LOG_FORMAT: ${LOG_FORMAT-dev}
       LOG_DIR: ${LOG_DIR-../../data/logs}

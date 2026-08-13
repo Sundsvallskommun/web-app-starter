@@ -30,7 +30,7 @@ const storeMocks = vi.hoisted(() => {
   };
 });
 
-vi.mock('@config', () => ({ REDIS_CONFIG: storeMocks.redisConfig }));
+vi.mock('@config', () => ({ REDIS_CONFIG: storeMocks.redisConfig, SESSION_MAX_AGE_MS: 12 * 60 * 60 * 1000 }));
 vi.mock('connect-redis', () => ({ RedisStore: storeMocks.RedisStoreStub }));
 vi.mock('session-file-store', () => ({ default: storeMocks.createFileStore }));
 vi.mock('./logger', () => ({ logger: { info: vi.fn() } }));
@@ -50,7 +50,7 @@ describe('createSessionStore', () => {
 
     expect(storeMocks.getRedisClient).not.toHaveBeenCalled();
     expect(storeMocks.createFileStore).toHaveBeenCalledOnce();
-    expect(storeMocks.fileStoreOptions).toEqual([{ path: './data/sessions', ttl: 345600 }]);
+    expect(storeMocks.fileStoreOptions).toEqual([{ path: './data/sessions', ttl: 43200 }]);
   });
 
   it('uses Redis for shared sessions when Redis is configured', async () => {
@@ -61,7 +61,7 @@ describe('createSessionStore', () => {
     const sessionStore = await createSessionStore();
 
     expect(sessionStore).toBeInstanceOf(storeMocks.RedisStoreStub);
-    expect(storeMocks.redisStoreOptions).toEqual([{ client: redisClient, prefix: 'web-app-starter:session:', ttl: 345600 }]);
+    expect(storeMocks.redisStoreOptions).toEqual([{ client: redisClient, prefix: 'web-app-starter:session:', ttl: 43200 }]);
     expect(storeMocks.createFileStore).not.toHaveBeenCalled();
   });
 
