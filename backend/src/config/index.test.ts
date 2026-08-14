@@ -27,8 +27,13 @@ describe('Redis configuration', () => {
     );
   });
 
-  it('requires an explicit key namespace whenever Redis is enabled', () => {
-    expect(() => createRedisConfig({ REDIS_HOST: 'redis.internal' })).toThrow('REDIS_KEY_PREFIX is required when REDIS_HOST is configured');
+  it.each(['', '   ', undefined])('falls back to the default key namespace when REDIS_KEY_PREFIX is %j', redisKeyPrefix => {
+    expect(createRedisConfig({ REDIS_HOST: 'redis.internal', REDIS_KEY_PREFIX: redisKeyPrefix })).toEqual({
+      enabled: true,
+      host: 'redis.internal',
+      keyPrefix: 'web-app-starter',
+      port: 6379,
+    });
   });
 
   it('rejects partial Redis settings without a host', () => {

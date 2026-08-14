@@ -9,6 +9,11 @@ config({ path: `.env.${process.env.NODE_ENV ?? 'development'}.local`, quiet: tru
 
 const env = process.env;
 
+// Namespaces every Redis key this application owns. Only needs overriding via
+// REDIS_KEY_PREFIX when several applications share one Redis instance; each
+// deployment currently runs its own, so the default is enough.
+const DEFAULT_REDIS_KEY_PREFIX = 'web-app-starter';
+
 type RedisConfig = { enabled: false } | { enabled: true; host: string; keyPrefix: string; port: number; password?: string };
 
 function parseRedisPort(value: string): number {
@@ -23,7 +28,8 @@ function parseRedisPort(value: string): number {
 
 export function createRedisConfig(environment: NodeJS.ProcessEnv): RedisConfig {
   const redisHost = environment.REDIS_HOST?.trim() ?? '';
-  const redisKeyPrefix = environment.REDIS_KEY_PREFIX?.trim() ?? '';
+  const configuredKeyPrefix = environment.REDIS_KEY_PREFIX?.trim() ?? '';
+  const redisKeyPrefix = configuredKeyPrefix === '' ? DEFAULT_REDIS_KEY_PREFIX : configuredKeyPrefix;
   const redisPort = environment.REDIS_PORT?.trim() ?? '';
   const redisPassword = environment.REDIS_PASSWORD ?? '';
 
@@ -33,10 +39,6 @@ export function createRedisConfig(environment: NodeJS.ProcessEnv): RedisConfig {
     }
 
     return { enabled: false };
-  }
-
-  if (!redisKeyPrefix) {
-    throw new Error('REDIS_KEY_PREFIX is required when REDIS_HOST is configured');
   }
 
   const connection = {
