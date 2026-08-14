@@ -1,6 +1,8 @@
 # Version control and local configuration
 .git
 .env*
+# The CI/CD placeholder env is part of the build, unlike every other .env file.
+!.env-cicd
 
 # Dependencies, generated output, and local artifacts
 node_modules
