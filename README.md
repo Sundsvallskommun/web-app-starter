@@ -66,6 +66,34 @@ redigera `.env.development.local` för behov. URLer, nycklar och cert behöver f
    - För frontend, se till att backend är igång (`yarn dev`), i /frontend kör `yarn generate:contracts` för att synca backend med frontend
      -- Justera om så behövs utifrån de uppdaterade modellerna
 
+### Backend-routes och autentisering
+
+Alla routes i backenden kräver autentisering som standard — en inloggad session måste finnas, annars svarar servern 401. Det är inte möjligt att råka glömma bort skyddet på en ny endpoint.
+
+**Lägga till en ny skyddad route** — gör ingenting extra. Lägg till controller och handler som vanligt; skyddet är automatiskt.
+
+**Lägga till en publik route** — dekorera handler med `@Public('motivering')`:
+
+```ts
+import { Public } from '@/middlewares/public.decorator';
+
+@Get('/health/up')
+@Public('Liveness probe - pollas av infrastrukturen utan session')
+async up() { ... }
+```
+
+Motiveringstexten loggas vid uppstart och fångas i ett snapshot-test, så varje förändring framgår i kodgranskning.
+
+**Lägga till en ny controller** — lägg till klassen i `src/controllers.ts`. Controllern täcks då automatiskt av autentiseringsskyddet och av auth-testerna.
+
+**Tester** — tre testsviter bevakar skyddet:
+
+| Fil | Vad den testar |
+| --- | --- |
+| `src/tests/default-auth.metadata.test.ts` | Källkodsnivå: varje route har antingen `@UseBefore(authMiddleware)` eller `@Public()` |
+| `src/tests/default-auth.runtime.test.ts` | Runtime: varje oskyddad route svarar 401 utan session |
+| `src/tests/default-auth.swagger.test.ts` | Swagger UI är nåbar utan session |
+
 ### Kvalitetsgrindar & test
 
 Repot har strikta, type-aware kvalitetsgrindar. Kör hela sviten från roten med `yarn verify`

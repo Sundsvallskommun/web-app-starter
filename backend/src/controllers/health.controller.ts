@@ -3,6 +3,7 @@ import { OpenAPI } from 'routing-controllers-openapi';
 
 import { getApiBase } from '@/config/api-config';
 import { HttpException } from '@/exceptions/HttpException';
+import { Public } from '@/middlewares/public.decorator';
 import ApiService from '@/services/api.service';
 import { logger } from '@/utils/logger';
 import { isRedisReady } from '@/utils/redis';
@@ -14,6 +15,7 @@ export class HealthController {
 
   @Get('/health/up')
   @OpenAPI({ summary: 'Return health check' })
+  @Public('Liveness probe - polled by infrastructure without a session')
   async up(): Promise<{ status: string }> {
     if (!isRedisReady()) {
       logger.error('Health check failed: Redis is not ready');

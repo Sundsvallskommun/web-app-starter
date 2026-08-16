@@ -1,15 +1,12 @@
 import type { Server } from 'node:http';
 
-import { IndexController } from '@controllers/index.controller';
 import { logger } from '@utils/logger';
 import { closeRedisClient, destroyRedisClient } from '@utils/redis';
 import { createSessionStore } from '@utils/session-store';
 import validateEnv from '@utils/validateEnv';
 
 import App from '@/app';
-
-import { HealthController } from './controllers/health.controller';
-import { UserController } from './controllers/user.controller';
+import { CONTROLLERS } from '@/controllers';
 
 const SHUTDOWN_GRACE_PERIOD_MS = 10_000;
 
@@ -92,7 +89,7 @@ export async function startServer(): Promise<void> {
 
   try {
     const sessionStore = await createSessionStore();
-    const app = new App([IndexController, UserController, HealthController], sessionStore);
+    const app = new App(CONTROLLERS, sessionStore);
     server = app.listen();
   } catch (error: unknown) {
     try {

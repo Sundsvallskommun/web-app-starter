@@ -20,7 +20,9 @@ import {
   SECRET_KEY,
   SWAGGER_ENABLED,
 } from '@config';
+import { createDefaultAuthGuard } from '@middlewares/default-auth.middleware';
 import errorMiddleware from '@middlewares/error.middleware';
+import { buildPublicPathSet, PublicRouteInfo } from '@middlewares/public.decorator';
 import { Profile as SamlProfile, Strategy, VerifiedCallback } from '@node-saml/passport-saml';
 import { logger, stream } from '@utils/logger';
 import bodyParser from 'body-parser';
@@ -158,7 +160,8 @@ class App {
     this.initializeDataFolders();
 
     this.initializeLivenessRoute();
-    this.initializeMiddlewares();
+    const { paths: publicPaths, routes: publicRoutes } = buildPublicPathSet(Controllers);
+    this.initializeMiddlewares(publicPaths, publicRoutes);
     this.initializeRoutes(Controllers);
     if (this.swaggerEnabled) {
       this.initializeSwagger(Controllers);
@@ -188,7 +191,7 @@ class App {
     this.app.get('/health', livenessHandler);
   }
 
-  private initializeMiddlewares() {
+  private initializeMiddlewares(publicPaths: Set<string>, publicRoutes: PublicRouteInfo[]) {
     // Trust the nearest reverse proxy so req.ip and rate limiting use the client address.
     this.app.set('trust proxy', 1);
     this.app.use(morgan(LOG_FORMAT, { stream }));
@@ -389,6 +392,17 @@ class App {
       }) as RequestHandler;
       authenticate(req, res, next);
     });
+
+    // Default-deny authentication. Mounted last so the SAML endpoints above it stay
+    // reachable, and before initializeRoutes() so every routing-controllers route sits
+    // behind it unless its handler carries @Public().
+    for (const route of publicRoutes) {
+      logger.warn(
+        `Auth guard: PUBLIC ${route.httpMethod} ${route.path} (${route.controller}.${route.action})` +
+          (route.reason ? ` - ${route.reason}` : ' - no reason given'),
+      );
+    }
+    this.app.use(BASE_URL_PREFIX, createDefaultAuthGuard(publicPaths));
   }
 
   private initializeRoutes(controllers: ControllerClass[]) {
