@@ -4,9 +4,10 @@
 // sends an unauthenticated request to every registered route. Everything must answer 401
 // except routes marked @Public().
 //
-// This is the assertion that actually matters: it proves the app-level guard denies by
-// default, independently of what any decorator claims. The metadata test covers declared
-// intent; this one covers behaviour.
+// The metadata test covers declared intent; this one covers behaviour. Note that a 401 on
+// a real route proves only that *something* denied it - every protected route also carries
+// its own @UseBefore(authMiddleware). GuardFixtureController is what isolates the guard:
+// it mounts a route with no auth decorator at all, so only the guard can deny it.
 
 import session from 'express-session';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
@@ -15,6 +16,7 @@ import App from '@/app';
 import { BASE_URL_PREFIX } from '@/config';
 import { CONTROLLERS } from '@/controllers';
 
+import { GuardFixtureController, PublicControllerFixture } from './fixtures/guard.fixture.controller';
 import { collectRegisteredRoutes, toConcretePath } from './helpers/routes';
 import { startServer, TestServer } from './helpers/server';
 
@@ -41,7 +43,7 @@ describe('default-deny auth (runtime)', () => {
   let server: TestServer;
 
   beforeAll(async () => {
-    server = await startServer(new App(CONTROLLERS, new session.MemoryStore()).getServer());
+    server = await startServer(new App([...CONTROLLERS, GuardFixtureController, PublicControllerFixture], new session.MemoryStore()).getServer());
   });
 
   afterAll(() => server.close());
@@ -85,6 +87,22 @@ describe('default-deny auth (runtime)', () => {
     const response = await send('options', target.path);
 
     expect(response.status).not.toBe(401);
+  });
+
+  it('denies a route carrying no auth decorator, proving the guard denies on its own', async () => {
+    const mounted = await server.request('get', `${BASE_URL_PREFIX}/__guard-fixture__/reachable`);
+    expect(mounted.status).toBe(200);
+
+    const response = await server.request('get', `${BASE_URL_PREFIX}/__guard-fixture__/unguarded`);
+    expect(response.status).toBe(401);
+  });
+
+  it('keeps a @UseBefore(authMiddleware) route protected inside a @Public() controller', async () => {
+    const sibling = await server.request('get', `${BASE_URL_PREFIX}/__public-class-fixture__/inherited`);
+    expect(sibling.status).toBe(200);
+
+    const response = await server.request('get', `${BASE_URL_PREFIX}/__public-class-fixture__/protected`);
+    expect(response.status).toBe(401);
   });
 
   it('denies an unknown path under the prefix rather than falling through', async () => {
