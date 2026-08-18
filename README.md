@@ -70,7 +70,18 @@ redigera `.env.development.local` för behov. URLer, nycklar och cert behöver f
 
 Alla routes i backenden kräver autentisering som standard — en inloggad session måste finnas, annars svarar servern 401. Det är inte möjligt att råka glömma bort skyddet på en ny endpoint.
 
-**Lägga till en ny skyddad route** — gör ingenting extra. Lägg till controller och handler som vanligt; skyddet är automatiskt.
+**Lägga till en ny skyddad route** — dekorera handler med `@UseBefore(authMiddleware)`:
+
+```ts
+import authMiddleware from '@middlewares/auth.middleware';
+import { UseBefore } from 'routing-controllers';
+
+@Get('/me')
+@UseBefore(authMiddleware)
+getUser() { ... }
+```
+
+Själva 401-svaret kommer inte från dekoratorn. Det kommer från en middleware som mountas framför hela `BASE_URL_PREFIX` innan controllers registreras (`createDefaultAuthGuard` i `backend/src/middlewares/default-auth.middleware.ts`) — den nekar allt som inte är märkt `@Public()`, så en ny route är skyddad så fort den finns. Dekoratorn behövs ändå: den deklarerar avsikten i koden. En route utan vare sig `@UseBefore(authMiddleware)` eller `@Public()` failar `default-auth.metadata.test.ts`, så skyddet kan varken glömmas bort eller tas bort tyst.
 
 **Lägga till en publik route** — dekorera handler med `@Public('motivering')`:
 
