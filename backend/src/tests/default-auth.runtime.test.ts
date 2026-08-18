@@ -73,6 +73,13 @@ describe('default-deny auth (runtime)', () => {
     },
   );
 
+  it('does not open other verbs on a public path', async () => {
+    const target = publicRoutes[0];
+    const response = await send('post', target.path);
+
+    expect(response.status).toBe(401);
+  });
+
   it('lets CORS preflight through so the real request is not blocked', async () => {
     const target = protectedRoutes[0];
     const response = await send('options', target.path);

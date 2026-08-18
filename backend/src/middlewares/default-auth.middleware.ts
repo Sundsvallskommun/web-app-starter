@@ -18,7 +18,7 @@ export const createDefaultAuthGuard =
       return;
     }
 
-    if (isPublicPath(req.path, publicPaths)) {
+    if (isPublicPath(req.method, req.path, publicPaths)) {
       next();
       return;
     }

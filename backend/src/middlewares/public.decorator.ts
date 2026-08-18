@@ -1,5 +1,7 @@
 import { getMetadataArgsStorage } from 'routing-controllers';
 
+import { publicRouteKey } from '@/config/public-paths';
+
 export interface PublicRouteInfo {
   path: string;
   httpMethod: string;
@@ -65,5 +67,5 @@ export function buildPublicPathSet(controllers: (new (...args: never[]) => objec
     });
   }
 
-  return { paths: new Set(routes.map(r => r.path)), routes };
+  return { paths: new Set(routes.map(r => publicRouteKey(r.httpMethod, r.path))), routes };
 }
