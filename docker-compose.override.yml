@@ -20,6 +20,8 @@ services:
       SAML_IDP_PUBLIC_CERT: ${SAML_IDP_PUBLIC_CERT:?err}
       # SP issuer and certs, issuer is usually the base URL
       SAML_ISSUER: ${SAML_ISSUER:?err}
+      # Optional. Falls back to SAML_ISSUER.
+      SAML_AUDIENCE: ${SAML_AUDIENCE-}
       SAML_PRIVATE_KEY: ${SAML_PRIVATE_KEY:?err}
       SAML_PUBLIC_KEY: ${SAML_PUBLIC_KEY:?err}
       # Used for session encrpytion
