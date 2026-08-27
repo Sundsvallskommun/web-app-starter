@@ -13,42 +13,23 @@ WORKDIR /app
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .
 
-# Next.js embeds public values and middleware-envs.js at build time. Require
-# deployment-specific public values instead of copying localhost defaults.
-ARG NEXT_PUBLIC_APP_NAME
-ARG NEXT_PUBLIC_API_URL
-ARG DOMAIN_NAME
-ARG BASE_PATH
-ARG NEXT_PUBLIC_BASE_PATH
-ARG ADMIN_URL
-ARG NEXT_PUBLIC_PROTECTED_ROUTES
+# Next.js embeds public values and middleware-envs.js at build time, so building
+# against real values would lock the image to a single environment. Build against
+# the placeholders in .env-cicd instead and let entrypoint.sh substitute the real
+# values at startup. The prebuild generator reads ./.env specifically, and Next
+# picks the same file up, so one copy covers both.
+COPY .env-cicd .env
 
-ENV NEXT_PUBLIC_APP_NAME="${NEXT_PUBLIC_APP_NAME}" \
-  NEXT_PUBLIC_API_URL="${NEXT_PUBLIC_API_URL}" \
-  DOMAIN_NAME="${DOMAIN_NAME}" \
-  BASE_PATH="${BASE_PATH}" \
-  NEXT_PUBLIC_BASE_PATH="${NEXT_PUBLIC_BASE_PATH}" \
-  ADMIN_URL="${ADMIN_URL}" \
-  NEXT_PUBLIC_PROTECTED_ROUTES="${NEXT_PUBLIC_PROTECTED_ROUTES}" \
-  NEXT_TELEMETRY_DISABLED=1
+ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN : "${NEXT_PUBLIC_APP_NAME:?Pass NEXT_PUBLIC_APP_NAME as a build argument}" \
-  && : "${NEXT_PUBLIC_API_URL:?Pass NEXT_PUBLIC_API_URL as a build argument}" \
-  && yarn build
+RUN yarn build
 
 FROM node:24-slim AS runner
 
 WORKDIR /app
 
-ARG NEXT_PUBLIC_APP_NAME
-ARG NEXT_PUBLIC_API_URL
-ARG NEXT_PUBLIC_BASE_PATH
-
 ENV NODE_ENV=production \
   HOSTNAME=0.0.0.0 \
-  NEXT_PUBLIC_APP_NAME="${NEXT_PUBLIC_APP_NAME}" \
-  NEXT_PUBLIC_API_URL="${NEXT_PUBLIC_API_URL}" \
-  NEXT_PUBLIC_BASE_PATH="${NEXT_PUBLIC_BASE_PATH}" \
   NEXT_TELEMETRY_DISABLED=1 \
   PORT=3000
 
@@ -62,15 +43,22 @@ COPY --from=builder --chown=root:root /app/.next/static ./.next/static
 COPY --from=dependencies --chown=root:root /app/node_modules/sharp ./node_modules/sharp
 COPY --from=dependencies --chown=root:root /app/node_modules/@img ./node_modules/@img
 
+COPY --chown=root:root entrypoint.sh ./
+# Normalise line endings so the script still runs when checked out on Windows.
+RUN sed -i 's/\r$//' entrypoint.sh && chmod 0555 entrypoint.sh
+
 # UID 1001 stays compatible with earlier images; group 0 write access supports
-# OpenShift's arbitrary runtime UID. Only Next's caches are writable.
+# OpenShift's arbitrary runtime UID. entrypoint.sh rewrites the build output in
+# place, so .next and server.js are group-writable — the directories too, since
+# sed -i creates its temp file alongside the target. Nothing else is writable.
 RUN useradd --uid 1001 --gid 0 --no-create-home --home-dir /nonexistent --shell /usr/sbin/nologin app \
   && mkdir -p /app/.next/cache \
-  && chown -R 1001:0 /app/.next/cache \
-  && chmod -R g=u /app/.next/cache
+  && chown -R 1001:0 /app/.next /app/server.js \
+  && chmod -R g+w /app/.next \
+  && chmod g+w /app/server.js
 
 USER 1001:0
 
 EXPOSE 3000
 
-CMD ["node", "server.js"]
+ENTRYPOINT ["/app/entrypoint.sh"]
