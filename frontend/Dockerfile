@@ -1,3 +1,4 @@
+# Dockerfile for the frontend service
 FROM node:24-slim AS dependencies
 
 WORKDIR /app
