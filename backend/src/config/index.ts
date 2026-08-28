@@ -52,6 +52,12 @@ export function createRedisConfig(environment: NodeJS.ProcessEnv): RedisConfig {
 
 export const REDIS_CONFIG = createRedisConfig(env);
 
+/**
+ * Session lifetime, shared by the session store TTL and the session cookie's maxAge so the two
+ * cannot drift apart. Kept deliberately short — the SAML IdP re-issues a session cheaply.
+ */
+export const SESSION_MAX_AGE_MS = 12 * 60 * 60 * 1000;
+
 export const CREDENTIALS = env.CREDENTIALS === 'true';
 export const SWAGGER_ENABLED = env.SWAGGER_ENABLED === 'true';
 
@@ -61,6 +67,12 @@ export const SWAGGER_ENABLED = env.SWAGGER_ENABLED === 'true';
 // merely importing this module trigger validation (which would break unit tests).
 export const APP_NAME = env.APP_NAME ?? '';
 export const NODE_ENV = env.NODE_ENV ?? 'development';
+/**
+ * Deployment target, independent of NODE_ENV. `LOCAL` means the app is reached over plain
+ * http (local `yarn dev` or a locally built production bundle) and the Secure cookie flag
+ * must stay off, otherwise the browser drops the session cookie. Leave unset when deployed.
+ */
+export const ENVIRONMENT = env.ENVIRONMENT ?? '';
 export const PORT = env.PORT ?? '';
 export const API_BASE_URL = env.API_BASE_URL ?? '';
 export const LOG_FORMAT = env.LOG_FORMAT ?? 'dev';

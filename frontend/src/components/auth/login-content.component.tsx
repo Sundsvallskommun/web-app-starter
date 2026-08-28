@@ -45,8 +45,8 @@ const LoginContent: React.FC = () => {
       failureRedirect: `${appURL()}${PATH.api.login}`,
     }).toString();
 
-    router.push(url.toString());
-  }, [router, searchParams, pathName]);
+    window.location.assign(url.toString());
+  }, [searchParams, pathName]);
 
   useEffect(() => {
     initialFocusRef.current?.focus();

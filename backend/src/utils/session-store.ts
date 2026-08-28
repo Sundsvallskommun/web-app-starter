@@ -1,4 +1,4 @@
-import { REDIS_CONFIG } from '@config';
+import { REDIS_CONFIG, SESSION_MAX_AGE_MS } from '@config';
 import { RedisStore } from 'connect-redis';
 import session from 'express-session';
 import createFileStore from 'session-file-store';
@@ -6,7 +6,7 @@ import createFileStore from 'session-file-store';
 import { logger } from './logger';
 import { getRedisClient } from './redis';
 
-const SESSION_TTL_SECONDS = 4 * 24 * 60 * 60;
+const SESSION_TTL_SECONDS = SESSION_MAX_AGE_MS / 1000;
 const SESSION_FILE_PATH = './data/sessions';
 
 /**
