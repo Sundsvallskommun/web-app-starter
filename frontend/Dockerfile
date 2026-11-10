@@ -62,3 +62,4 @@ USER 1001:0
 EXPOSE 3000
 
 ENTRYPOINT ["/app/entrypoint.sh"]
+CMD ["node", "server.js"]

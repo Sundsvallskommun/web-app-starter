@@ -18,8 +18,8 @@
     "format": "prettier --write \"{src,e2e}/**/*.{ts,tsx}\"",
     "format:check": "prettier --check \"{src,e2e}/**/*.{ts,tsx}\"",
     "type-check": "tsc --pretty --noEmit",
-    "knip": "knip",
-    "knip:production": "knip --production",
+    "knip": "cross-env NEXT_PUBLIC_APP_NAME=knip NEXT_PUBLIC_API_URL=http://localhost knip",
+    "knip:production": "cross-env NEXT_PUBLIC_APP_NAME=knip NEXT_PUBLIC_API_URL=http://localhost knip --production",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -31,11 +31,11 @@
     "analyze:browser": "cross-env BUNDLE_ANALYZE=browser next build"
   },
   "dependencies": {
-    "@sk-web-gui/core": "4.6.0",
-    "@sk-web-gui/react": "3.1.1",
-    "axios": "^1.18.1",
+    "@sk-web-gui/core": "4.6.2",
+    "@sk-web-gui/react": "3.1.3",
+    "axios": "^1.21.1",
     "dayjs": "^1.11.21",
-    "i18next": "^26.3.3",
+    "i18next": "^26.7.2",
     "i18next-resources-to-backend": "^1.2.1",
     "lodash": "4.18.1",
     "next": "16.2.12",
@@ -44,7 +44,7 @@
     "react-dom": "^19.2.7",
     "react-i18next": "^17.0.8",
     "sass": "^1.101.0",
-    "sharp": "^0.35.3",
+    "sharp": "^0.35.5",
     "zustand": "^5.0.14"
   },
   "devDependencies": {
@@ -58,8 +58,8 @@
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
-    "@vitest/coverage-v8": "^4.1.9",
-    "autoprefixer": "^10.5.2",
+    "@vitest/coverage-v8": "^4.1.12",
+    "autoprefixer": "^10.6.2",
     "cross-env": "^10",
     "dotenv": "^17.4.2",
     "envalid": "^8.2.0",
@@ -69,21 +69,22 @@
     "eslint-plugin-simple-import-sort": "^13",
     "eslint-plugin-unused-imports": "^4.4.1",
     "jsdom": "^29.1.1",
-    "knip": "^6.23.0",
-    "postcss": "^8.5.16",
+    "knip": "^6.44.2",
+    "postcss": "^8.5.23",
     "postcss-import": "^16.1.1",
     "prettier": "^3.9.3",
-    "swagger-typescript-api": "^13.12.3",
+    "swagger-typescript-api": "^13.14.0",
     "tailwindcss": "^3.4.19",
     "typescript": "6.0.3",
     "typescript-eslint": "8.61.0",
-    "vite": "^8.0.0",
-    "vitest": "^4.1.9"
+    "vite": "^8.1.6",
+    "vitest": "^4.1.12"
   },
   "browserslist": [
     "defaults and fully supports es6-module"
   ],
   "resolutions": {
-    "next/sharp": "0.35.3"
+    "next/postcss": "^8.5.23",
+    "next/sharp": "0.35.5"
   }
 }
