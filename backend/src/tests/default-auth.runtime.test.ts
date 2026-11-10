@@ -54,6 +54,12 @@ describe('default-deny auth (runtime)', () => {
 
   const send = (httpMethod: string, path: string) => server.request(httpMethod, `${BASE_URL_PREFIX}${toConcretePath(path)}`);
 
+  const firstRoute = (candidates: typeof routes) => {
+    const [first] = candidates;
+    if (!first) throw new Error('Expected at least one route to probe');
+    return first;
+  };
+
   it('enumerates the routes it is about to probe', () => {
     expect(protectedRoutes.length).toBeGreaterThan(0);
     expect(publicRoutes.length).toBeGreaterThan(0);
@@ -76,14 +82,14 @@ describe('default-deny auth (runtime)', () => {
   );
 
   it('does not open other verbs on a public path', async () => {
-    const target = publicRoutes[0];
+    const target = firstRoute(publicRoutes);
     const response = await send('post', target.path);
 
     expect(response.status).toBe(401);
   });
 
   it('lets CORS preflight through so the real request is not blocked', async () => {
-    const target = protectedRoutes[0];
+    const target = firstRoute(protectedRoutes);
     const response = await send('options', target.path);
 
     expect(response.status).not.toBe(401);

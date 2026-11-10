@@ -7,14 +7,20 @@
 // would return the HTML shell and 401 every asset, leaving a blank page rather than an
 // honest error - which is exactly the failure this test is here to catch.
 //
-// Nothing is imported statically from '@/config' or '@/app': config reads SWAGGER_ENABLED
-// into a module-level const at import time, and static imports are hoisted above the
-// assignment below. Everything that touches config is therefore imported dynamically.
+// config reads SWAGGER_ENABLED into a module-level const at import time, and static imports
+// are hoisted. vi.hoisted() runs before those imports, so the flag is set in time.
 
 import session from 'express-session';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
+import App from '@/app';
+import { CONTROLLERS } from '@/controllers';
+
 import { startServer, TestServer } from './helpers/server';
+
+vi.hoisted(() => {
+  process.env.SWAGGER_ENABLED = 'true';
+});
 
 vi.mock('@/services/api.service', () => {
   const stub = vi.fn(() => Promise.resolve({ data: {} }));
@@ -40,11 +46,6 @@ describe('default-deny auth (swagger)', () => {
   const prefix = process.env.BASE_URL_PREFIX ?? '';
 
   beforeAll(async () => {
-    process.env.SWAGGER_ENABLED = 'true';
-
-    const { default: App } = (await import('@/app')) as typeof import('@/app');
-    const { CONTROLLERS } = (await import('@/controllers')) as typeof import('@/controllers');
-
     server = await startServer(new App(CONTROLLERS, new session.MemoryStore()).getServer());
   });
 
