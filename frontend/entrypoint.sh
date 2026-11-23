@@ -44,5 +44,7 @@ done
 
 cp "$SERVER_TMP" "$SERVER_JS"
 
-echo 'Starting Next.js'
-exec node "$SERVER_JS"
+# Run the image's CMD (node server.js by default). Honouring "$@" lets callers such as CI
+# run a one-off command (`docker run <image> sh -c '...'`) instead of always starting the
+# server, which would never exit.
+exec "$@"

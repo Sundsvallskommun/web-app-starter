@@ -13,6 +13,7 @@ jobs:
     permissions:
       contents: read
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     env:
       ADMIN_URL: http://localhost:3002
       API_BASE_URL: https://api.example.test
@@ -49,6 +50,8 @@ jobs:
     permissions:
       contents: read
     runs-on: ubuntu-latest
+    # Fail fast if a container step hangs instead of waiting for the 6h default.
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
