@@ -106,5 +106,9 @@ one of these, confirm the blocker below has actually cleared — don't rediscove
   with an explicit `rootDir: src`.
 
 **Node:** install/build on **Node 24** (`.nvmrc`) — `lint-staged 17` requires `>=22.22.1`.
-`vite` stays at the locked `8.0.x` (range `^8` already allows 8.1; a `yarn upgrade vite` trips a
-yarn-1 nested-link bug via vitest's optional peer, so let it float on the next clean lockfile regen).
+`vite` floats on `^8` and must be `>=8.1.6` (security fixes). Don't bump it with `yarn upgrade vite` —
+that trips a yarn-1 nested-link bug via vitest's optional peer. Instead drop the `vite` entries from
+`yarn.lock` and re-run `yarn install` (the "unmet peer vite" warning that follows is the same yarn-1
+quirk and harmless). Vite 8.1+ only applies tsconfig `paths` to files inside the tsconfig's
+`include`/`exclude`, so test dirs must not be excluded in `tsconfig.json` (keep them out of the build via
+`tsconfig.build.json` instead). Backend is on 8.3.x; frontend/admin are still on 8.0.x pending their own upgrade.
